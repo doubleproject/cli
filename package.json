@@ -1,0 +1,29 @@
+{
+  "name": "boson",
+  "namespace": "double",
+  "version": "0.1.0",
+  "description": "Boson - The simplest blockchain development suite",
+  "scripts": {
+    "watch": "tsc -w",
+    "build": "tsc",
+    "lint": "tslint"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^9.6.2",
+    "@types/yargs": "^11.0.0",
+    "install": "^0.11.0",
+    "npm": "^5.8.0",
+    "tslint": "^5.9.1",
+    "typescript": "^2.8.1",
+    "yargs": "^11.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/danqing/boson.git"
+  },
+  "bugs": {
+    "url": "https://github.com/danqing/boson/issues"
+  },
+  "license": "MIT"
+}
