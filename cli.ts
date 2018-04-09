@@ -1,13 +1,21 @@
-import * as yargs from 'yargs';
+#!/usr/bin/env node
 
-let parser = yargs();
-let argv = parser.parse(process.argv);
+import * as program from 'commander';
 
-if (argv.help || argv['?']) {
-  console.log('Boson command line help');
-  process.exit(0);
-}
+program.version('0.1.0');
 
-process.on('SIGINT', () => {
+program
+  .command('list')
+  .description('List available networks')
+  .action(() => {
+    console.log('Boson list command');
+  });
 
-});
+program
+  .command('init')
+  .description('Set up a new network')
+  .action(() => {
+    console.log('Boson init command');
+  });
+
+program.parse(process.argv);
