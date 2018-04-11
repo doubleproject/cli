@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import * as program from 'commander';
-import { Locator } from './src/locator';
+import { Locator } from './lib/utils/locator';
 
 program.version('0.1.0');
 
