@@ -2,6 +2,7 @@
 
 import * as program from 'commander';
 import { Locator } from './lib/utils/locator';
+import { sh } from './lib/utils/shell';
 
 program.version('0.1.0');
 
@@ -9,7 +10,12 @@ program
   .command('list')
   .description('List available networks')
   .action(() => {
-    console.log('Boson list command');
+    const list = async () => {
+      const { stdout, stderr } = await sh('geth account list');
+      stdout && console.log(stdout);
+      stderr && console.log(stderr);
+    };
+    list();
   });
 
 program
