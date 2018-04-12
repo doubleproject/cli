@@ -12,6 +12,7 @@
     "boson": "out/cli.js"
   },
   "dependencies": {
+    "chalk": "^2.3.2",
     "commander": "^2.15.1",
     "crypto-js": "^3.1.9-1",
     "rimraf": "^2.6.2",

@@ -1,5 +1,7 @@
 import * as rimraf from 'rimraf';
 
+import { ISpawnInput } from '../../lib/utils/shell';
+
 interface IGethFlags {
   // Disable peer discovery (manual addition only).
   nodiscover?: boolean;
@@ -30,10 +32,10 @@ export class Geth {
    * 
    * @param {string} datadir - The data directory.
    * @param {string} genesis - The path to the genesis.json file.
-   * @returns {string} The initialization script.
+   * @returns {ISpawnInput} The initialization script.
    */
-  static initScript(datadir: string, genesis: string) : string {
-    return `geth --datadir ${datadir} init ${genesis}`;
+  static initScript(datadir: string, genesis: string) : ISpawnInput {
+    return {command: 'geth', options: ['--datadir', datadir, 'init', genesis]};
   }
 
   static cleanup(datadir: string, callback?: (error: Error) => void) {
@@ -44,55 +46,55 @@ export class Geth {
    * Generates shell command to start a node.
    * 
    * @param {IGethFlags} flags - Geth flags to pass to the start command.
-   * @returns {string} The start script.
+   * @returns {ISpawnInput} The start script.
    */
-  static startScriptWithFlags(flags: IGethFlags) : string {
-    let commands = ['geth'];
+  static startScriptWithFlags(flags: IGethFlags) : ISpawnInput {
+    let options = [];
     
     if (flags.nodiscover) {
-      commands.push('--nodiscover');
+      options.push('--nodiscover');
     }
 
     if (flags.maxpeers) {
-      commands.push('--maxpeers');
-      commands.push(flags.maxpeers.toString());
+      options.push('--maxpeers');
+      options.push(flags.maxpeers.toString());
     }
 
     if (flags.port) {
-      commands.push('--port');
-      commands.push(flags.port.toString());
+      options.push('--port');
+      options.push(flags.port.toString());
     }
 
     if (flags.identity) {
-      commands.push('--identity');
-      commands.push(flags.identity);
+      options.push('--identity');
+      options.push(flags.identity);
     }
 
     if (flags.datadir) {
-      commands.push('--datadir');
-      commands.push(flags.datadir);
+      options.push('--datadir');
+      options.push(flags.datadir);
     }
     
     if (flags.rpc) {
-      commands.push('--rpc');
+      options.push('--rpc');
       if (flags.rpcaddr) {
-        commands.push('--rpcaddr');
-        commands.push(flags.rpcaddr);
+        options.push('--rpcaddr');
+        options.push(flags.rpcaddr);
       }
       if (flags.rpcport) {
-        commands.push('--rpcport');
-        commands.push(flags.rpcport.toString());
+        options.push('--rpcport');
+        options.push(flags.rpcport.toString());
       }
       if (flags.rpcapi) {
-        commands.push('--rpcapi');
-        commands.push(flags.rpcapi.join());
+        options.push('--rpcapi');
+        options.push(flags.rpcapi.join());
       }
       if (flags.rpccorsdomain) {
-        commands.push('--rpccorsdomain');
-        commands.push(flags.rpccorsdomain.join());
+        options.push('--rpccorsdomain');
+        options.push(flags.rpccorsdomain.join());
       }
     }
 
-    return commands.join(' ');
+    return {command: 'geth', options};
   }
 }

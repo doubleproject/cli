@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
 import * as program from 'commander';
+
 import { Locator } from './lib/utils/locator';
-import { sh } from './lib/utils/shell';
+import { executeSync } from './lib/utils/shell';
 
 import { Geth } from './backend/ethereum/geth';
 
@@ -12,27 +13,18 @@ program
   .command('list')
   .description('List available networks')
   .action(() => {
-    const list = async () => {
-      const { stdout, stderr } = await sh('geth account list');
-      stdout && console.log(stdout);
-      stderr && console.log(stderr);
-    };
-    list();
+    executeSync({command: 'geth', 'options': ['account', 'list']});
   });
 
 program
   .command('init')
   .description('Set up a new network')
   .action(() => {
-    const script = Geth.initScript(
-      './fixtures/ethereum', './fixtures/ethereum/genesis.json');
-    const init = async () => {
-      const { stdout, stderr } = await sh(script);
-      stdout && console.log(stdout);
-      stderr && console.log(stderr);
-    };
-    init();
-    console.log('Boson init command');
+    const command = Geth.initScript('./fixtures/ethereum', './fixtures/ethereum/genesis.json');
+    const response = executeSync(command);
+    if (response.status === 0) {
+      console.log('setup new network!');
+    }
   });
 
 program
