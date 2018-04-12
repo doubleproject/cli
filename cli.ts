@@ -2,8 +2,8 @@
 
 import * as program from 'commander';
 
-import { Locator } from './lib/utils/locator';
-import { executeSync } from './lib/utils/shell';
+import Locator from './lib/utils/locator';
+import { executeSync, info } from './lib/utils/shell';
 
 import { Geth } from './backend/ethereum/geth';
 
@@ -20,6 +20,7 @@ program
   .command('init')
   .description('Initialize a blockchain by creating the genesis block')
   .action(() => {
+    info('Creating genesis block for chain');
     const command = Geth.initScript('./fixtures/ethereum', './fixtures/ethereum/genesis.json');
     const response = executeSync(command);
     if (response.status === 0) {

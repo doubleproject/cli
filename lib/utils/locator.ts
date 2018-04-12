@@ -1,7 +1,7 @@
 import * as which from 'which';
 import * as path from 'path';
 
-export class Locator {
+export default class Locator {
   /**
    * Searches for an executable with the given name under PATH, returns null if
    * the executable cannot be found.
