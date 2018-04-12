@@ -18,7 +18,7 @@ program
 
 program
   .command('init')
-  .description('Set up a new network')
+  .description('Initialize a blockchain by creating the genesis block')
   .action(() => {
     const command = Geth.initScript('./fixtures/ethereum', './fixtures/ethereum/genesis.json');
     const response = executeSync(command);
@@ -29,10 +29,23 @@ program
 
 program
   .command('reset')
-  .description('Reset the current blockchain to start over')
+  .description('Reset a blockchain completely, removing all its data')
   .action(() => {
     Geth.cleanup('./fixtures/ethereum/geth');
     console.log('Cleaned up');
+  });
+
+program
+  .command('start')
+  .description('Start a new node')
+  .action(() => {
+    const command = Geth.startScript({
+      nodiscover: true,
+      datadir: './fixtures/ethereum/geth',
+      identity: 'boson',
+      rpc: true,
+    });
+    executeSync(command);
   });
 
 // This is just a temporary convenient entrypoint to test the locator out

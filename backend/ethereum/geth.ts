@@ -48,8 +48,8 @@ export class Geth {
    * @param {IGethFlags} flags - Geth flags to pass to the start command.
    * @returns {ISpawnInput} The start script.
    */
-  static startScriptWithFlags(flags: IGethFlags) : ISpawnInput {
-    let options = [];
+  static startScript(flags: IGethFlags) : ISpawnInput {
+    let options = ['console'];
     
     if (flags.nodiscover) {
       options.push('--nodiscover');
