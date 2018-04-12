@@ -23,6 +23,8 @@ interface IGethFlags {
   port?: number;
   // Custom node name.
   identity?: string;
+  // 1=Frontier (default), 2=Morden (disused), 3=Ropsten, 4=Rinkeby.
+  networkid?: number;
 }
 
 export class Geth {
@@ -73,6 +75,11 @@ export class Geth {
     if (flags.datadir) {
       options.push('--datadir');
       options.push(flags.datadir);
+    }
+
+    if (flags.networkid) {
+      options.push('--networkid');
+      options.push(flags.networkid.toString());
     }
     
     if (flags.rpc) {
