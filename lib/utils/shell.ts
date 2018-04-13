@@ -11,5 +11,9 @@ export function executeSync(input: ISpawnInput) : SpawnSyncReturns<Buffer> {
 }
 
 export function info(message: string) {
-  console.log('boson' + chalk.green(' INFO ') + message);
+  console.log(chalk.bgCyan('boson') + chalk.green(' INFO ') + message);
+}
+
+export function error(message: string) {
+  console.log(chalk.bgCyan('boson') + chalk.green(' ERROR ') + message);
 }
