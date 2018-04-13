@@ -1,0 +1,69 @@
+=============== Apr 12, 2018 (CST) ===============
+16:57:58.272360 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+16:57:58.272999 db@open opening
+16:57:58.273397 version@stat F·[] S·0B[] Sc·[]
+16:57:58.273713 db@janitor F·2 G·0
+16:57:58.273793 db@open done T·771.227µs
+=============== Apr 12, 2018 (CST) ===============
+16:58:03.038503 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+16:58:03.038675 version@stat F·[] S·0B[] Sc·[]
+16:58:03.038699 db@open opening
+16:58:03.038758 journal@recovery F·1
+16:58:03.041403 journal@recovery recovering @1
+16:58:03.042168 memdb@flush created L0@2 N·11 S·727B "H\xb1\x99..#\x8c\xea,v5":"sec..\u0092.,v1"
+16:58:03.042404 version@stat F·[1] S·727B[727B] Sc·[0.25]
+16:58:03.043447 db@janitor F·3 G·0
+16:58:03.043477 db@open done T·4.763186ms
+=============== Apr 12, 2018 (CST) ===============
+17:41:01.148597 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+17:41:01.149621 version@stat F·[1] S·727B[727B] Sc·[0.25]
+17:41:01.149647 db@open opening
+17:41:01.149720 journal@recovery F·1
+17:41:01.152409 journal@recovery recovering @3
+17:41:01.153307 memdb@flush created L0@5 N·1 S·301B "eth..#\x8c\xea,v13":"eth..#\x8c\xea,v13"
+17:41:01.153614 version@stat F·[2] S·1KiB[1KiB] Sc·[0.50]
+17:41:01.154566 db@janitor F·4 G·0
+17:41:01.154602 db@open done T·4.938787ms
+=============== Apr 12, 2018 (CST) ===============
+18:35:13.231044 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+18:35:13.232145 version@stat F·[2] S·1KiB[1KiB] Sc·[0.50]
+18:35:13.232174 db@open opening
+18:35:13.232250 journal@recovery F·1
+18:35:13.234897 journal@recovery recovering @6
+18:35:13.235750 memdb@flush created L0@8 N·1 S·301B "eth..#\x8c\xea,v15":"eth..#\x8c\xea,v15"
+18:35:13.235992 version@stat F·[3] S·1KiB[1KiB] Sc·[0.75]
+18:35:13.237040 db@janitor F·5 G·0
+18:35:13.237075 db@open done T·4.885563ms
+=============== Apr 12, 2018 (CST) ===============
+18:35:38.667357 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+18:35:38.668242 version@stat F·[3] S·1KiB[1KiB] Sc·[0.75]
+18:35:38.668285 db@open opening
+18:35:38.668373 journal@recovery F·1
+18:35:38.671382 journal@recovery recovering @9
+18:35:38.672263 memdb@flush created L0@11 N·1 S·301B "eth..#\x8c\xea,v17":"eth..#\x8c\xea,v17"
+18:35:38.672499 version@stat F·[4] S·1KiB[1KiB] Sc·[1.00]
+18:35:38.673963 db@janitor F·6 G·0
+18:35:38.674008 db@open done T·5.704578ms
+18:35:38.674109 table@compaction L0·4 -> L1·0 S·1KiB Q·18
+=============== Apr 12, 2018 (CST) ===============
+23:06:12.551660 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+23:06:12.552732 version@stat F·[4] S·1KiB[1KiB] Sc·[1.00]
+23:06:12.552759 db@open opening
+23:06:12.552836 journal@recovery F·1
+23:06:12.555374 journal@recovery recovering @12
+23:06:12.557015 memdb@flush created L0@14 N·1 S·301B "eth..#\x8c\xea,v19":"eth..#\x8c\xea,v19"
+23:06:12.557306 version@stat F·[5] S·1KiB[1KiB] Sc·[1.25]
+23:06:12.558651 db@janitor F·7 G·0
+23:06:12.558709 db@open done T·5.934345ms
+23:06:12.558866 table@compaction L0·5 -> L1·0 S·1KiB Q·20
+=============== Apr 12, 2018 (CST) ===============
+23:06:39.823446 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+23:06:39.824581 version@stat F·[5] S·1KiB[1KiB] Sc·[1.25]
+23:06:39.824609 db@open opening
+23:06:39.824688 journal@recovery F·1
+23:06:39.827361 journal@recovery recovering @15
+23:06:39.828340 memdb@flush created L0@17 N·1 S·301B "eth..#\x8c\xea,v21":"eth..#\x8c\xea,v21"
+23:06:39.828604 version@stat F·[6] S·2KiB[2KiB] Sc·[1.50]
+23:06:39.829595 db@janitor F·8 G·0
+23:06:39.829653 db@open done T·5.0279ms
+23:06:39.829875 table@compaction L0·6 -> L1·0 S·2KiB Q·22
