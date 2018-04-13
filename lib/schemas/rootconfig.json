@@ -1,0 +1,27 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "properties": {
+        "backend": {
+            "description": "Backend to use. Default is geth.",
+            "type": "string"
+        },
+        "chain": {
+            "description": "Name of the chain. Default is ethereum.",
+            "type": "string"
+        },
+        "hosts": {
+            "description": "An array of account keystore file paths, this will be used to import\naccounts on initialization.\n/\naccounts?: string[];\n/**\nA non-empty array of host IP:port addresses, in that format.",
+            "items": {
+                "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+        }
+    },
+    "required": [
+        "chain",
+        "hosts"
+    ],
+    "type": "object"
+}
+

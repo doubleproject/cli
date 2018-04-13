@@ -1,0 +1,25 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "description": "For remote networks, we cannot control how they're started. But having a\nseparate type for live configurations could make code clearer.\n\nTODO[hengchu]: I'm not super sure what the parameters should be yet.",
+    "properties": {
+        "backend": {
+            "description": "Backend to use. Default is geth.",
+            "type": "string"
+        },
+        "chain": {
+            "description": "Name of the chain. Default is ethereum.",
+            "type": "string"
+        },
+        "hosts": {
+            "description": "An array of account keystore file paths, this will be used to import\naccounts on initialization.\n/\naccounts?: string[];\n/**\nA non-empty array of host IP:port addresses, in that format.",
+            "items": {
+                "type": "string",
+                "pattern": "(ipv4|ipv6):port"
+            },
+            "minItems": 1,
+            "type": "array"
+        }
+    },
+    "type": "object"
+}
+

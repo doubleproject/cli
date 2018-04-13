@@ -1,12 +1,21 @@
-interface IBosonConfig {
-  // Name of the chain. Default is ethereum.
+export interface IBosonConfig {
+  /**
+   * Name of the chain. Default is ethereum.
+   */
   chain: string;
-  // Backend to use. Default is geth.
+  /**
+   * Backend to use. Default is geth.
+   */
   backend?: string;
-  // An array of account keystore file paths, this will be used to import
-  // accounts on initialization.
-  accounts: string[];
-  // An array of host IP:port addresses, in that format.
+  /**
+   *  An array of account keystore file paths, this will be used to import
+   * accounts on initialization.
+   * /
+  accounts?: string[];
+  /**
+   * A non-empty array of host IP:port addresses, in that format.
+   * @minItems 1
+   */
   hosts: string[];  
 }
 
@@ -18,13 +27,19 @@ interface IBosonConfig {
  * TODO[hengchu]: I'm not super sure what the parameters should be yet, but
  * here's a couple.
  */
-interface IBosonLocalConfig extends IBosonConfig {
-  // Custom node name.
-  nodeName: string;
-  // Network id.
-  networkid: number;
-  // Gas price multiplier (in Wei).
-  gasPrice: number;
+export interface IBosonLocalConfig extends IBosonConfig {
+  /**
+   * Custom node name.
+   */
+  nodeName?: string;
+  /**
+   * Network id.
+   */
+  networkid?: number;
+  /**
+   * Gas price multiplier (in Wei).
+   */
+  gasPrice?: number;
 }
 
 /**
@@ -33,6 +48,6 @@ interface IBosonLocalConfig extends IBosonConfig {
  * 
  * TODO[hengchu]: I'm not super sure what the parameters should be yet.
  */
-interface IBosonRemoteConfig extends IBosonConfig {
+export interface IBosonRemoteConfig extends IBosonConfig {
   // EMPTY
 }
