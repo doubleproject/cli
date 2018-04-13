@@ -2,6 +2,7 @@
 
 import * as program from 'commander';
 
+import { ETHEREUM_DATADIR, ETHEREUM_GENESIS } from './data';
 import Locator from './lib/utils/locator';
 import { executeSync, info } from './lib/utils/shell';
 
@@ -21,7 +22,7 @@ program
   .description('Initialize a blockchain by creating the genesis block')
   .action(() => {
     info('Creating genesis block for chain');
-    const command = Geth.initScript('./fixtures/ethereum', './fixtures/ethereum/genesis.json');
+    const command = Geth.initScript(ETHEREUM_DATADIR, ETHEREUM_GENESIS);
     const response = executeSync(command);
     if (response.status === 0) {
       console.log('setup new network!');
@@ -32,7 +33,7 @@ program
   .command('reset')
   .description('Reset a blockchain completely, removing all its data')
   .action(() => {
-    Geth.cleanup('./fixtures/ethereum/geth');
+    Geth.cleanup(ETHEREUM_DATADIR);
     console.log('Cleaned up');
   });
 
@@ -42,7 +43,7 @@ program
   .action(() => {
     const command = Geth.startScript({
       nodiscover: true,
-      datadir: './fixtures/ethereum/geth',
+      datadir: ETHEREUM_DATADIR,
       identity: 'boson',
       rpc: true,
     });

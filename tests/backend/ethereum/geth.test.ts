@@ -1,6 +1,6 @@
 import test from 'ava';
 
-import { Geth } from '../../../backend/ethereum/geth';
+import { Geth } from '../../../src/backend/ethereum/geth';
 
 test('start script should contain correct flags', t => {
   const flags = {
