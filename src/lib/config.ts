@@ -18,7 +18,7 @@ interface IBosonConfig {
  * TODO[hengchu]: I'm not super sure what the parameters should be yet, but
  * here's a couple.
  */
-interface IBosonDevConfig extends IBosonConfig {
+interface IBosonLocalConfig extends IBosonConfig {
   // Custom node name.
   nodeName: string;
   // Network id.
@@ -33,6 +33,6 @@ interface IBosonDevConfig extends IBosonConfig {
  * 
  * TODO[hengchu]: I'm not super sure what the parameters should be yet.
  */
-interface IBosonLiveConfig extends IBosonConfig {
+interface IBosonRemoteConfig extends IBosonConfig {
   // EMPTY
 }
