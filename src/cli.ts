@@ -7,7 +7,9 @@ import Locator from './lib/utils/locator';
 import { executeSync, info } from './lib/utils/shell';
 
 import * as init from './apis/init';
+import * as status from './apis/status';
 import { Geth } from './backend/ethereum/geth';
+import { stat } from 'fs';
 
 program.version('0.1.0');
 
@@ -45,6 +47,13 @@ program
       rpc: true,
     });
     executeSync(command);
+  });
+
+program
+  .command('status')
+  .description('Get system and project status')
+  .action(() => {
+    status.cli();
   });
 
 // This is just a temporary convenient entrypoint to test the locator out
