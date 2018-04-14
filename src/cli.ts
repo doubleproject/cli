@@ -9,7 +9,6 @@ import { executeSync, info } from './lib/utils/shell';
 import * as init from './apis/init';
 import * as status from './apis/status';
 import { Geth } from './backend/ethereum/geth';
-import { stat } from 'fs';
 
 program.version('0.1.0');
 
