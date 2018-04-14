@@ -5,10 +5,9 @@
   "description": "Boson - The simplest blockchain development suite",
   "scripts": {
     "watch": "tsc -w",
-    "copy": "mkdir -p dist/lib/schemas && cp -r src/lib/schemas dist/lib/",  
-    "build": "npm run-script copy && tsc",
+    "build": "tsc",
     "lint": "tslint",
-    "test": "npm run-script build && ava",
+    "test": "tsc && ava",
     "clean": "rm -rf dist"
   },
   "bin": {

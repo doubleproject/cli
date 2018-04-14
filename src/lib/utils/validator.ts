@@ -1,8 +1,8 @@
 import * as ajv from 'ajv';
 import * as Config from '../config';
-import * as RemoteSchema from '../schemas/remoteconfig.json';
-import * as LocalSchema from '../schemas/localconfig.json';
-import * as RootSchema from '../schemas/rootconfig.json';
+import * as RemoteSchema from '../../../remoteconfig.json';
+import * as LocalSchema from '../../../localconfig.json';
+import * as RootSchema from '../../../rootconfig.json';
 
 export class Validator {
   ajvInstance : ajv.Ajv;
