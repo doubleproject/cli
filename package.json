@@ -10,7 +10,7 @@
     "test": "tsc && ava"
   },
   "bin": {
-    "boson": "out/cli.js"
+    "boson": "dist/cli.js"
   },
   "dependencies": {
     "chalk": "^2.3.2",
