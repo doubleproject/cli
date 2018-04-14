@@ -27,6 +27,5 @@ build/Release
 node_modules
 
 # Build artifacts
-out
 dist
-fixtures/ethereum/geth
+data/ethereum/geth
