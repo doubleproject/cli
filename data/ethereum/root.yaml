@@ -1,0 +1,6 @@
+chain: mylocalchain
+backend: geth
+accounts:
+  - data/ethereum/keystore/UTC--2018-04-11T07-27-24.674124930Z--58be50a8b24004d33c063a7b20691f24e19e203f
+hosts:
+  - 127.0.0.1:30303
