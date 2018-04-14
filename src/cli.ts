@@ -5,6 +5,7 @@ import * as program from 'commander';
 import { ETHEREUM_DATADIR, ETHEREUM_GENESIS } from './data';
 import Locator from './lib/utils/locator';
 import { executeSync, info } from './lib/utils/shell';
+import { initializeRootConfig } from './lib/initialize';
 
 import { Geth } from './backend/ethereum/geth';
 
@@ -21,6 +22,9 @@ program
   .command('init')
   .description('Initialize a blockchain by creating the genesis block')
   .action(() => {
+    // Create a root.yaml file if it doesn't exist.
+    initializeRootConfig();
+    
     info('Creating genesis block for chain');
     const command = Geth.initScript(ETHEREUM_DATADIR, ETHEREUM_GENESIS);
     const response = executeSync(command);
