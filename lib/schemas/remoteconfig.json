@@ -13,8 +13,7 @@
         "hosts": {
             "description": "An array of account keystore file paths, this will be used to import\naccounts on initialization.\n/\naccounts?: string[];\n/**\nA non-empty array of host IP:port addresses, in that format.",
             "items": {
-                "type": "string",
-                "pattern": "(ipv4|ipv6):port"
+                "type": "string"
             },
             "minItems": 1,
             "type": "array"

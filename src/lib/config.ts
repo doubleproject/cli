@@ -10,7 +10,7 @@ export interface IBosonConfig {
   /**
    *  An array of account keystore file paths, this will be used to import
    * accounts on initialization.
-   * /
+   */
   accounts?: string[];
   /**
    * A non-empty array of host IP:port addresses, in that format.
