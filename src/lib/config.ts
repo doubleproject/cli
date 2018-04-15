@@ -1,4 +1,5 @@
 import * as YAML from 'yamljs';
+import { Validator } from './utils/validator';
 import * as _ from 'lodash';
 
 export interface IBosonConfig {
@@ -55,12 +56,37 @@ export interface IBosonRemoteConfig extends IBosonConfig {
 }
 
 export class ConfigParser {
-  /**
-   * Parse the YAML file from the given path synchronously. Can throw exception
-   * on invalid YAML files.
-   */
-  static parseFromFile(path: string) : any {
-    return YAML.load(path);
+  static async parseRootConfigFromFile(path: string) : Promise<string | IBosonConfig> {
+    try {
+      const data = YAML.load(path);
+      const validator = new Validator();
+      const result = await validator.validateRootConfig(data);
+      return result;
+    } catch (error) {
+      return error.toString();
+    }
+  }
+
+  static async parseLocalConfigFromFile(path: string) : Promise<string | IBosonLocalConfig> {
+    try {
+      const data = YAML.load(path);
+      const validator = new Validator();
+      const result = await validator.validateLocalConfig(data);
+      return result;
+    } catch (error) {
+      return error.toString();
+    }
+  }
+
+  static async parseRemoteConfigFromFile(path: string) : Promise<string | IBosonRemoteConfig> {
+    try {
+      const data = YAML.load(path);
+      const validator = new Validator();
+      const result = await validator.validateRemoteConfig(data);
+      return result;
+    } catch (error) {
+      return error.toString();
+    }
   }
 
   private static buildCompleteConfig<T>(root: IBosonConfig, other: T) : T {
@@ -69,7 +95,7 @@ export class ConfigParser {
     // https://stackoverflow.com/questions/34201483/deep-clone-in-typescript-preserving-types
     var otherCopy : any = _.cloneDeep(other);
     for (let key in root) {
-      if (! (key in otherCopy)) {
+      if (!(key in otherCopy)) {
         otherCopy[key] =
           _.cloneDeep((<any>root)[key]);
       }

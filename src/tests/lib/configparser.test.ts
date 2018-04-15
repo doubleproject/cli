@@ -1,40 +1,40 @@
 import { ConfigParser } from '../../lib/config';
-import { Validator } from '../../lib/utils/validator';
 import test from 'ava';
 
 test('root.yaml should be parseable and valid', async t => {
-  const data = ConfigParser.parseFromFile('testdata/root.yaml');
-  const valid = new Validator();
-  const rootConfig = await valid.validateRootConfig(data);
-  t.deepEqual(data, rootConfig);
+  const data = await ConfigParser.parseRootConfigFromFile('testdata/root.yaml');
+  if (typeof data === 'string') {
+    t.fail(data);
+  } else {
+    t.pass();
+  }
 });
 
 test('local.yaml should be parseable and valid', async t => {
-  const data = ConfigParser.parseFromFile('testdata/local.yaml');
-  const valid = new Validator();
-  const localConfig = await valid.validateLocalConfig(data);
-  t.deepEqual(data, localConfig);
+  const data = await ConfigParser.parseLocalConfigFromFile('testdata/local.yaml');
+  if (typeof data === 'string') {
+    t.fail(data);
+  } else {
+    t.pass();
+  }
 });
 
 test('remote.yaml should be parseable and valid', async t => {
-  const data = ConfigParser.parseFromFile('testdata/remote.yaml');
-  const valid = new Validator();
-  const remoteConfig = await valid.validateRemoteConfig(data);
-  t.deepEqual(data, remoteConfig);
+  const data = await ConfigParser.parseRemoteConfigFromFile('testdata/remote.yaml');
+  if (typeof data === 'string') {
+    t.fail(data);
+  } else {
+    t.pass();
+  }
 });
 
 test('complete local yaml should have root properties', async t => {
-  const valid = new Validator();
-
-  const rootdata = ConfigParser.parseFromFile('testdata/root.yaml');
-  const rootConfig = await valid.validateRootConfig(rootdata);
-
-  const localdata = ConfigParser.parseFromFile('testdata/local.yaml');
-  const localConfig = await valid.validateLocalConfig(localdata);
+  const rootConfig = await ConfigParser.parseRootConfigFromFile('testdata/root.yaml');
+  const localConfig = await ConfigParser.parseLocalConfigFromFile('testdata/local.yaml');
 
   if (typeof rootConfig === 'string' ||
       typeof localConfig === 'string') {
-    t.fail('Failed to validate root.yaml or local.yaml');
+    t.fail('Failed to parse and validate root.yaml or local.yaml');
   } else {
     const completeLocalConfig =
       ConfigParser.buildCompleteLocalConfig(rootConfig, localConfig);
@@ -47,17 +47,13 @@ test('complete local yaml should have root properties', async t => {
 });
 
 test('complete remote yaml should have root properties', async t => {
-  const valid = new Validator();
+  const rootConfig = await ConfigParser.parseRootConfigFromFile('testdata/root.yaml');
 
-  const rootdata = ConfigParser.parseFromFile('testdata/root.yaml');
-  const rootConfig = await valid.validateRootConfig(rootdata);
-
-  const remotedata = ConfigParser.parseFromFile('testdata/remote.yaml');
-  const remoteConfig = await valid.validateRemoteConfig(remotedata);
+  const remoteConfig = await ConfigParser.parseRemoteConfigFromFile('testdata/remote.yaml');
 
   if (typeof rootConfig === 'string' ||
       typeof remoteConfig === 'string') {
-    t.fail('Failed to validate root.yaml or remote.yaml');
+    t.fail('Failed to parse and validate root.yaml or remote.yaml');
   } else {
     const completeRemoteConfig =
       ConfigParser.buildCompleteRemoteConfig(rootConfig, remoteConfig);
