@@ -5,7 +5,6 @@ import * as program from 'commander';
 import { ETHEREUM_DATADIR, ETHEREUM_GENESIS } from './data';
 import Locator from './lib/utils/locator';
 import { executeSync, info } from './lib/utils/shell';
-import { initializeRootConfig } from './lib/initialize';
 
 import { Geth } from './backend/ethereum/geth';
 
