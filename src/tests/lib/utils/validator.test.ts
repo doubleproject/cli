@@ -8,7 +8,7 @@ test('root config must have chain and hosts', async t => {
     hosts: ['127.0.0.1:8080', '127.0.0.1:8081']
   };
   
-  var validator = new Validator();
+  const validator = new Validator();
   const result = await validator.validateRootConfig(config);
   if (typeof result === 'string') {
     t.fail(result);
@@ -25,7 +25,7 @@ test('validator should report missing hosts', async t => {
     chain: 'mytestchain',
   };
   
-  var validator = new Validator();
+  const validator = new Validator();
   const result = await validator.validateRootConfig(config);
   if (typeof result === 'string') {
     t.pass(result);
@@ -40,7 +40,7 @@ test('validator should report empty hosts', async t => {
     hosts: []
   };
   
-  var validator = new Validator();
+  const validator = new Validator();
   const result = await validator.validateRootConfig(config);
   if (typeof result === 'string') {
     t.pass(result);
@@ -52,7 +52,7 @@ test('validator should report empty hosts', async t => {
 test('empty local config should be valid', async t => {
   const config = {};
 
-  var validator = new Validator();
+  const validator = new Validator();
   const result = await validator.validateLocalConfig(config);
   if (typeof result === 'string') {
     t.fail(result);
@@ -66,7 +66,7 @@ test('local config with empty hosts is invalid', async t => {
     hosts: []
   };
 
-  var validator = new Validator();
+  const validator = new Validator();
   const result = await validator.validateLocalConfig(config);
   if (typeof result === 'string') {
     t.pass(result);
@@ -80,7 +80,7 @@ test('local config with hosts is valid', async t => {
     hosts: ['127.0.0.1:8080']
   };
 
-  var validator = new Validator();
+  const validator = new Validator();
   const result = await validator.validateLocalConfig(config);
   if (typeof result === 'string') {
     t.fail(result);
