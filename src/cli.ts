@@ -22,9 +22,6 @@ program
   .command('init')
   .description('Initialize a blockchain by creating the genesis block')
   .action(() => {
-    // Create a root.yaml file if it doesn't exist.
-    initializeRootConfig();
-    
     info('Creating genesis block for chain');
     const command = Geth.initScript(ETHEREUM_DATADIR, ETHEREUM_GENESIS);
     const response = executeSync(command);
