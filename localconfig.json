@@ -10,12 +10,16 @@
             "description": "Name of the chain. Default is ethereum.",
             "type": "string"
         },
+        "datadir": {
+            "description": "The directory to store accounts in.",
+            "type": "string"
+        },
         "gasPrice": {
             "description": "Gas price multiplier (in Wei).",
             "type": "number"
         },
         "hosts": {
-            "description": "An array of account keystore file paths, this will be used to import\naccounts on initialization.\n/\naccounts?: string[];\n/**\nA non-empty array of host IP:port addresses, in that format.",
+            "description": "A non-empty array of host IP:port addresses, in that format.",
             "items": {
                 "type": "string"
             },

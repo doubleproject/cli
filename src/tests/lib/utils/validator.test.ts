@@ -4,13 +4,14 @@ import { Validator } from '../../../lib/utils/validator';
 test('root config must have chain and hosts', async t => {
   const config = {
     chain: 'mytestchain',
+    datadir: 'foobar',
     hosts: ['127.0.0.1:8080', '127.0.0.1:8081']
   };
   
   var validator = new Validator();
   const result = await validator.validateRootConfig(config);
   if (typeof result === 'string') {
-    console.log(result);
+    t.fail(result);
   } else {
     const cfg = result;
     t.is(cfg.chain, config.chain);

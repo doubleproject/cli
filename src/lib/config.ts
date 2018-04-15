@@ -8,10 +8,9 @@ export interface IBosonConfig {
    */
   backend?: string;
   /**
-   *  An array of account keystore file paths, this will be used to import
-   * accounts on initialization.
+   * The directory to store accounts in.
    */
-  accounts?: string[];
+  datadir: string;
   /**
    * A non-empty array of host IP:port addresses, in that format.
    * @minItems 1

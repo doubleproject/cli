@@ -1,19 +1,16 @@
 {
     "$schema": "http://json-schema.org/draft-06/schema#",
     "properties": {
-        "accounts": {
-            "description": "An array of account keystore file paths, this will be used to import\naccounts on initialization.",
-            "items": {
-                "type": "string"
-            },
-            "type": "array"
-        },
         "backend": {
             "description": "Backend to use. Default is geth.",
             "type": "string"
         },
         "chain": {
             "description": "Name of the chain. Default is ethereum.",
+            "type": "string"
+        },
+        "datadir": {
+            "description": "The directory to store accounts in.",
             "type": "string"
         },
         "hosts": {
@@ -27,6 +24,7 @@
     },
     "required": [
         "chain",
+        "datadir",
         "hosts"
     ],
     "type": "object"
