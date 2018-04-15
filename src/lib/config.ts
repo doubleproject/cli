@@ -6,11 +6,11 @@ interface IBosonConfig {
 }
 
 export default class Config {
-  static get() : IBosonConfig {
+  public static get(): IBosonConfig {
     return {chain: 'ethereum'};
   }
 
-  static getForEnv() {
+  public static getForEnv() {
     // Get environment specific config.
   }
 }

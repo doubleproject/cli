@@ -16,7 +16,7 @@ program
   .command('list')
   .description('List available networks')
   .action(() => {
-    executeSync({command: 'geth', 'options': ['account', 'list']});
+    executeSync({command: 'geth', options: ['account', 'list']});
   });
 
 program
@@ -40,9 +40,9 @@ program
   .description('Start a new node')
   .action(() => {
     const command = Geth.startScript({
-      nodiscover: true,
       datadir: ETHEREUM_DATADIR,
       identity: 'boson',
+      nodiscover: true,
       rpc: true,
     });
     executeSync(command);
@@ -59,7 +59,7 @@ program
 program
   .command('search <name>')
   .description('Search for the executable')
-  .action((name) => {
+  .action(name => {
     console.log(Locator.search(name));
   });
 
@@ -70,9 +70,8 @@ program
     console.log(Locator.searchUnder(name, dirs));
   });
 
-
 program.parse(process.argv);
 
 if (program.args.length === 0) {
   program.help();
-};
+}

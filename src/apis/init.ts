@@ -1,12 +1,12 @@
 import * as fs from 'fs';
 import * as Listr from 'listr';
 
-import { error, executeSync } from '../lib/utils/shell';
 import { Geth } from '../backend/ethereum/geth';
+import { error, executeSync } from '../lib/utils/shell';
 
 /**
  * CLI entrypoint for initializing a project.
- * 
+ *
  * This creates a boson.yaml file in the current folder that contains configs
  * for the project. If such file already exists, it will be used. Then if a
  * local environment is specified, the network will be initialized.
@@ -15,21 +15,21 @@ export function cli() {
   const tasks = new Listr([
     {
       title: 'Setting up Boson configuration',
-      task: (ctx, task) => {
-        task.title = 'Created Boson config file at boson.yaml';
-      },
       skip: () => {
         if (fs.existsSync('boson.yaml')) {
           return 'Existing boson.yaml file found and will be used';
         }
         return undefined;
-      }
+      },
+      task: (ctx, task) => {
+        task.title = 'Created Boson config file at boson.yaml';
+      },
     },
     {
       title: 'Checking genesis block configuration',
       task: (ctx, task) => {
-        
-      }
+        return;
+      },
     },
     {
       title: 'Creating local test network',
@@ -41,8 +41,8 @@ export function cli() {
         } else {
           throw new Error('Unable to initialize local network');
         }
-      }
-    }
+      },
+    },
   ]);
 
   tasks.run().catch(err => {

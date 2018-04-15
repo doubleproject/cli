@@ -1,4 +1,5 @@
 import { spawnSync, SpawnSyncReturns } from 'child_process';
+
 import chalk from 'chalk';
 
 export interface ISpawnInput {
@@ -6,7 +7,7 @@ export interface ISpawnInput {
   options: string[];
 }
 
-export function executeSync(input: ISpawnInput) : SpawnSyncReturns<Buffer> {
+export function executeSync(input: ISpawnInput): SpawnSyncReturns<Buffer> {
   return spawnSync(input.command, input.options, {stdio: 'inherit'});
 }
 
