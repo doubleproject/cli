@@ -1,23 +1,23 @@
-import { ConfigParser } from '../../lib/configparser';
+import { ConfigParser } from '../../lib/config';
 import { Validator } from '../../lib/utils/validator';
 import test from 'ava';
 
 test('root.yaml should be parseable and valid', async t => {
-  const data = ConfigParser.parseFromFile('data/ethereum/root.yaml');
+  const data = ConfigParser.parseFromFile('testdata/root.yaml');
   const valid = new Validator();
   const rootConfig = await valid.validateRootConfig(data);
   t.deepEqual(data, rootConfig);
 });
 
 test('local.yaml should be parseable and valid', async t => {
-  const data = ConfigParser.parseFromFile('data/ethereum/local.yaml');
+  const data = ConfigParser.parseFromFile('testdata/local.yaml');
   const valid = new Validator();
   const localConfig = await valid.validateLocalConfig(data);
   t.deepEqual(data, localConfig);
 });
 
 test('remote.yaml should be parseable and valid', async t => {
-  const data = ConfigParser.parseFromFile('data/ethereum/remote.yaml');
+  const data = ConfigParser.parseFromFile('testdata/remote.yaml');
   const valid = new Validator();
   const remoteConfig = await valid.validateRemoteConfig(data);
   t.deepEqual(data, remoteConfig);
@@ -26,10 +26,10 @@ test('remote.yaml should be parseable and valid', async t => {
 test('complete local yaml should have root properties', async t => {
   const valid = new Validator();
 
-  const rootdata = ConfigParser.parseFromFile('data/ethereum/root.yaml');
+  const rootdata = ConfigParser.parseFromFile('testdata/root.yaml');
   const rootConfig = await valid.validateRootConfig(rootdata);
 
-  const localdata = ConfigParser.parseFromFile('data/ethereum/local.yaml');
+  const localdata = ConfigParser.parseFromFile('testdata/local.yaml');
   const localConfig = await valid.validateLocalConfig(localdata);
 
   if (typeof rootConfig === 'string' ||
@@ -49,10 +49,10 @@ test('complete local yaml should have root properties', async t => {
 test('complete remote yaml should have root properties', async t => {
   const valid = new Validator();
 
-  const rootdata = ConfigParser.parseFromFile('data/ethereum/root.yaml');
+  const rootdata = ConfigParser.parseFromFile('testdata/root.yaml');
   const rootConfig = await valid.validateRootConfig(rootdata);
 
-  const remotedata = ConfigParser.parseFromFile('data/ethereum/remote.yaml');
+  const remotedata = ConfigParser.parseFromFile('testdata/remote.yaml');
   const remoteConfig = await valid.validateRemoteConfig(remotedata);
 
   if (typeof rootConfig === 'string' ||
