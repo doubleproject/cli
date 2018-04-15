@@ -26,7 +26,24 @@ function logProjectInfo() {
   }
 }
 
+/**
+ * Logs network information.
+ *
+ * - Local network condition:
+ *   - If there's an active local network, display it.
+ *   - Otherwise, if there's a project configuration:
+ *     - If local network is specified, let user run boson start.
+ *     - Otherwise tell user about global config.
+ *   - Otherwise, let user run boson init or use the global config.
+ * - Remote network condition:
+ *   - If there's a project configuration that contains remote network, show
+ *     its status.
+ */
 function logNetworkInfo() {
-  console.log('No active local network');
-  console.log('You may start the local network with "boson start"');
+  if (false) {
+    //
+  } else {
+    console.log('No active local network');
+    console.log('You may start the local network with "boson start"');
+  }
 }
