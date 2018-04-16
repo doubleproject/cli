@@ -3,7 +3,7 @@ import * as YAML from 'yamljs';
 
 import { Validator } from './utils/validator';
 
-export interface IBosonConfig {
+export interface IBaseEnvConfig {
   /**
    * Name of the chain. Default is ethereum.
    */
@@ -31,7 +31,7 @@ export interface IBosonConfig {
  * TODO[hengchu]: I'm not super sure what the parameters should be yet, but
  * here's a couple.
  */
-export interface IBosonLocalConfig extends IBosonConfig {
+export interface ILocalConfig extends IBaseEnvConfig {
   /**
    * Custom node name.
    */
@@ -52,7 +52,7 @@ export interface IBosonLocalConfig extends IBosonConfig {
  *
  * TODO[hengchu]: I'm not super sure what the parameters should be yet.
  */
-export interface IBosonRemoteConfig extends IBosonConfig {
+export interface IRemoteConfig extends IBaseEnvConfig {
   /**
    * A path to the directory storing all keyfiles for this remote network.
    */
@@ -62,7 +62,7 @@ export interface IBosonRemoteConfig extends IBosonConfig {
 /**
  * This interface represents the single config file per project.
  */
-export interface IBosonProjConfig {
+export interface IProjectConfig {
   /**
    * The name of the project.
    */
@@ -76,43 +76,37 @@ export interface IBosonProjConfig {
   /**
    * The local network overrides.
    */
-  local?: IBosonLocalConfig;
+  local?: ILocalConfig;
 
   /**
    * The test network overrides.
    */
-  test?: IBosonRemoteConfig;
+  test?: IRemoteConfig;
 
   /**
    * The main network overrides.
    */
-  main?: IBosonRemoteConfig;
+  main?: IRemoteConfig;
 }
 
 export class ConfigParser {
 
-  static async parseProjConfigFromFile(path: string): Promise<string | IBosonProjConfig> {
-    try {
-      const data = YAML.load(path);
-      const validator = new Validator();
-      return await validator.validateProjConfig(data);
-    } catch (error) {
-      return error.toString();
-    }
+  static async parseProjConfigFromFile(path: string): Promise<IProjectConfig> {
+    return await new Validator().validateProjConfig(YAML.load(path));
   }
 
-  private static buildCompleteConfig<T>(root: IBosonConfig, other: T): T {
+  private static buildCompleteConfig<T>(root: IBaseEnvConfig, other: T): T {
     // Note: this has some un-wanted interactions with typeof, just in case we
     // run into that problem in the future:
     // https://stackoverflow.com/questions/34201483/deep-clone-in-typescript-preserving-types
-    const otherCopy = _.cloneDeep(other);
+    const otherCopy: T = _.cloneDeep(other);
     for (const key in root) {
       if (!(key in otherCopy)) {
-        otherCopy[key] = _.cloneDeep((<any>root)[key]);
+        otherCopy[key] = _.cloneDeep(root[key]);
       }
     }
 
-    return <T>otherCopy;
+    return otherCopy;
   }
 
   /**
@@ -120,9 +114,9 @@ export class ConfigParser {
    * The local config takes preference if they both set the same field.
    */
   private static buildCompleteLocalConfig(
-    root: IBosonConfig, local: IBosonLocalConfig,
-  ): IBosonLocalConfig {
-    return ConfigParser.buildCompleteConfig<IBosonLocalConfig>(root, local);
+    root: IBaseEnvConfig, local: ILocalConfig,
+  ): ILocalConfig {
+    return ConfigParser.buildCompleteConfig<ILocalConfig>(root, local);
   }
 
   /**
@@ -130,16 +124,16 @@ export class ConfigParser {
    * The remote config takes preference if they both set the same field.
    */
   private static buildCompleteRemoteConfig(
-    root: IBosonConfig, remote: IBosonRemoteConfig,
-  ): IBosonRemoteConfig {
-    return ConfigParser.buildCompleteConfig<IBosonRemoteConfig>(root, remote);
+    root: IBaseEnvConfig, remote: IRemoteConfig,
+  ): IRemoteConfig {
+    return ConfigParser.buildCompleteConfig<IRemoteConfig>(root, remote);
   }
 }
 
 /**
  * Create a default configuration for a project with its name.
  */
-export function defaultConfigForProject(name: string): IBosonProjConfig {
+export function defaultConfigForProject(name: string): IProjectConfig {
   return {
     project: name,
     chain: 'ethereum',
