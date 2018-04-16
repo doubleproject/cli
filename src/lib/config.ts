@@ -55,7 +55,48 @@ export interface IBosonRemoteConfig extends IBosonConfig {
   // EMPTY
 }
 
+/**
+ * This interface represents the single config file per project.
+ */
+export interface IBosonEnvConfig {
+  /**
+   * The name of the project.
+   */
+  project: string;
+
+  /**
+   * The shared parameters of both local and remote networks.
+   */
+  shared?: IBosonConfig;
+
+  /**
+   * The local network overrides.
+   */
+  local?: IBosonLocalConfig;
+
+  /**
+   * The test network overrides.
+   */
+  test?: IBosonRemoteConfig;
+
+  /**
+   * The main network overrides.
+   */
+  main?: IBosonRemoteConfig;
+}
+
 export class ConfigParser {
+  static async parseEnvConfigFromFile(path: string) : Promise<string | IBosonEnvConfig> {
+    try {
+      const data = YAML.load(path);
+      const validator = new Validator();
+      const result = await validator.validateEnvConfig(data);
+      return result;
+    } catch (error) {
+      return error.toString();
+    }
+  }
+  
   static async parseRootConfigFromFile(path: string) : Promise<string | IBosonConfig> {
     try {
       const data = YAML.load(path);
@@ -120,5 +161,20 @@ export class ConfigParser {
   static buildCompleteRemoteConfig(root: IBosonConfig,
                                    remote: IBosonRemoteConfig) : IBosonRemoteConfig {
     return ConfigParser.buildCompleteConfig<IBosonRemoteConfig>(root, remote);
+  }
+
+  /**
+   * Create a default configuration for a project with its name.
+   */
+  static defaultConfigForProject(name: string) : IBosonEnvConfig {
+    return {
+      project: name,
+      shared: {
+        chain: 'ethereum',
+        backend: 'geth',
+        datadir: '~/.boson/datadir',
+        hosts: ['127.0.0.1:30303']
+      }
+    };
   }
 }

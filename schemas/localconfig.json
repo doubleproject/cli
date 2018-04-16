@@ -1,40 +1,46 @@
 {
+    "$id": "localconfig.json",
+    "$ref": "#/definitions/IBosonLocalConfig",
     "$schema": "http://json-schema.org/draft-06/schema#",
-    "description": "For local dev networks, we can control what their parameters are. These can\nbe used to fill the parameters to IGethFlags, for example, when we start a\nlocal network. But they should be generic enough to support all the backends.\n\nTODO[hengchu]: I'm not super sure what the parameters should be yet, but\nhere's a couple.",
-    "properties": {
-        "backend": {
-            "description": "Backend to use. Default is geth.",
-            "type": "string"
-        },
-        "chain": {
-            "description": "Name of the chain. Default is ethereum.",
-            "type": "string"
-        },
-        "datadir": {
-            "description": "The directory to store accounts in.",
-            "type": "string"
-        },
-        "gasPrice": {
-            "description": "Gas price multiplier (in Wei).",
-            "type": "number"
-        },
-        "hosts": {
-            "description": "A non-empty array of host IP:port addresses, in that format.",
-            "items": {
-                "type": "string"
+    "definitions": {
+        "IBosonLocalConfig": {
+            "description": "For local dev networks, we can control what their parameters are. These can\nbe used to fill the parameters to IGethFlags, for example, when we start a\nlocal network. But they should be generic enough to support all the backends.\n\nTODO[hengchu]: I'm not super sure what the parameters should be yet, but\nhere's a couple.",
+            "properties": {
+                "backend": {
+                    "description": "Backend to use. Default is geth.",
+                    "type": "string"
+                },
+                "chain": {
+                    "description": "Name of the chain. Default is ethereum.",
+                    "type": "string"
+                },
+                "datadir": {
+                    "description": "The directory to store accounts in.",
+                    "type": "string"
+                },
+                "gasPrice": {
+                    "description": "Gas price multiplier (in Wei).",
+                    "type": "number"
+                },
+                "hosts": {
+                    "description": "A non-empty array of host IP:port addresses, in that format.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "minItems": 1,
+                    "type": "array"
+                },
+                "networkid": {
+                    "description": "Network id.",
+                    "type": "number"
+                },
+                "nodeName": {
+                    "description": "Custom node name.",
+                    "type": "string"
+                }
             },
-            "minItems": 1,
-            "type": "array"
-        },
-        "networkid": {
-            "description": "Network id.",
-            "type": "number"
-        },
-        "nodeName": {
-            "description": "Custom node name.",
-            "type": "string"
+            "type": "object"
         }
-    },
-    "type": "object"
+    }
 }
 

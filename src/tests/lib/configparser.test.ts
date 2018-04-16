@@ -69,14 +69,14 @@ test('complete remote yaml should have root properties', async t => {
 
 test('default config should be valid', async t => {
   const defaultConfigPath = path.join(ETHEREUM_DATADIR, 'boson.yaml');
-  const rootConfig = await ConfigParser.parseRootConfigFromFile(defaultConfigPath);
+  const envConfig = await ConfigParser.parseEnvConfigFromFile(defaultConfigPath);
 
-  if (typeof rootConfig === 'string') {
-    t.fail('Failed to parse and validate bosom.yaml');
+  if (typeof envConfig === 'string') {
+    t.fail(envConfig);
   } else {
-    t.is(rootConfig.chain, 'ethereum');
-    t.is(rootConfig.backend, 'geth');
-    t.is(rootConfig.datadir, '~/.boson/datadir');
-    t.deepEqual(rootConfig.hosts, ['127.0.0.1:30303']);
+    t.is(envConfig.project, 'default');
+    t.is(envConfig.shared!.backend, 'geth');
+    t.is(envConfig.shared!.datadir, '~/.boson/datadir');
+    t.deepEqual(envConfig.shared!.hosts, ['127.0.0.1:30303']);
   }
 });

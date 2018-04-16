@@ -1,0 +1,127 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "definitions": {
+        "IBosonConfig": {
+            "properties": {
+                "backend": {
+                    "description": "Backend to use. Default is geth.",
+                    "type": "string"
+                },
+                "chain": {
+                    "description": "Name of the chain. Default is ethereum.",
+                    "type": "string"
+                },
+                "datadir": {
+                    "description": "The directory to store accounts in.",
+                    "type": "string"
+                },
+                "hosts": {
+                    "description": "A non-empty array of host IP:port addresses, in that format.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "minItems": 1,
+                    "type": "array"
+                }
+            },
+            "required": [
+                "chain",
+                "datadir",
+                "hosts"
+            ],
+            "type": "object"
+        },
+        "IBosonLocalConfig": {
+            "description": "For local dev networks, we can control what their parameters are. These can\nbe used to fill the parameters to IGethFlags, for example, when we start a\nlocal network. But they should be generic enough to support all the backends.\n\nTODO[hengchu]: I'm not super sure what the parameters should be yet, but\nhere's a couple.",
+            "properties": {
+                "backend": {
+                    "description": "Backend to use. Default is geth.",
+                    "type": "string"
+                },
+                "chain": {
+                    "description": "Name of the chain. Default is ethereum.",
+                    "type": "string"
+                },
+                "datadir": {
+                    "description": "The directory to store accounts in.",
+                    "type": "string"
+                },
+                "gasPrice": {
+                    "description": "Gas price multiplier (in Wei).",
+                    "type": "number"
+                },
+                "hosts": {
+                    "description": "A non-empty array of host IP:port addresses, in that format.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "minItems": 1,
+                    "type": "array"
+                },
+                "networkid": {
+                    "description": "Network id.",
+                    "type": "number"
+                },
+                "nodeName": {
+                    "description": "Custom node name.",
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "IBosonRemoteConfig": {
+            "description": "For remote networks, we cannot control how they're started. But having a\nseparate type for live configurations could make code clearer.\n\nTODO[hengchu]: I'm not super sure what the parameters should be yet.",
+            "properties": {
+                "backend": {
+                    "description": "Backend to use. Default is geth.",
+                    "type": "string"
+                },
+                "chain": {
+                    "description": "Name of the chain. Default is ethereum.",
+                    "type": "string"
+                },
+                "datadir": {
+                    "description": "The directory to store accounts in.",
+                    "type": "string"
+                },
+                "hosts": {
+                    "description": "A non-empty array of host IP:port addresses, in that format.",
+                    "items": {
+                        "type": "string"
+                    },
+                    "minItems": 1,
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        }
+    },
+    "description": "This interface represents the single config file per project.",
+    "properties": {
+        "local": {
+            "$ref": "#/definitions/IBosonLocalConfig",
+            "description": "The local network overrides."
+        },
+        "main": {
+            "$ref": "#/definitions/IBosonRemoteConfig",
+            "description": "The main network overrides."
+        },
+        "project": {
+            "description": "The name of the project.",
+            "type": "string"
+        },
+        "shared": {
+            "$ref": "#/definitions/IBosonConfig",
+            "description": "The shared parameters of both local and remote networks."
+        },
+        "test": {
+            "$ref": "#/definitions/IBosonRemoteConfig",
+            "description": "The test network overrides."
+        }
+    },
+    "required": [
+        "project"
+    ],
+    "type": "object"
+}
+
