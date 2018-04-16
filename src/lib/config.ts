@@ -59,20 +59,7 @@ export interface IRemoteConfig extends IBaseEnvConfig {
   keydir: string;
 }
 
-/**
- * This interface represents the single config file per project.
- */
-export interface IProjectConfig {
-  /**
-   * The name of the project.
-   */
-  project: string;
-
-  /**
-   * Name of the chain. Default is ethereum.
-   */
-  chain: string;
-
+interface IEnvs {
   /**
    * The local network overrides.
    */
@@ -87,6 +74,23 @@ export interface IProjectConfig {
    * The main network overrides.
    */
   main?: IRemoteConfig;
+}
+
+/**
+ * This interface represents the single config file per project.
+ */
+export interface IProjectConfig {
+  /**
+   * The name of the project.
+   */
+  project: string;
+
+  /**
+   * Name of the chain. Default is ethereum.
+   */
+  chain: string;
+
+  env: IEnvs;
 }
 
 export class ConfigParser {
@@ -137,11 +141,13 @@ export function defaultConfigForProject(name: string): IProjectConfig {
   return {
     project: name,
     chain: 'ethereum',
-    local: {
-      chain: 'ethereum',
-      backend: 'geth',
-      datadir: '~/.boson/datadir',
-      hosts: ['127.0.0.1:30303'],
+    env: {
+      local: {
+        chain: 'ethereum',
+        backend: 'geth',
+        datadir: '~/.boson/datadir',
+        hosts: ['127.0.0.1:30303'],
+      },
     },
   };
 }
