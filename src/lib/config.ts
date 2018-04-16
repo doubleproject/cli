@@ -52,23 +52,25 @@ export interface IBosonLocalConfig extends IBosonConfig {
  * TODO[hengchu]: I'm not super sure what the parameters should be yet.
  */
 export interface IBosonRemoteConfig extends IBosonConfig {
-  // EMPTY
+  /**
+   * A path to the directory storing all keyfiles for this remote network.
+   */
+  keydir: string;
 }
-
 
 /**
  * This interface represents the single config file per project.
  */
-export interface IBosonEnvConfig {
+export interface IBosonProjConfig {
   /**
    * The name of the project.
    */
   project: string;
 
   /**
-   * The shared parameters of both local and remote networks.
+   * Name of the chain. Default is ethereum.
    */
-  shared?: IBosonConfig;
+  chain: string;
 
   /**
    * The local network overrides.
@@ -87,50 +89,17 @@ export interface IBosonEnvConfig {
 }
 
 export class ConfigParser {
-  static async parseEnvConfigFromFile(path: string) : Promise<string | IBosonEnvConfig> {
+  static async parseProjConfigFromFile(path: string) : Promise<string | IBosonProjConfig> {
     try {
       const data = YAML.load(path);
       const validator = new Validator();
-      const result = await validator.validateEnvConfig(data);
+      const result = await validator.validateProjConfig(data);
       return result;
     } catch (error) {
       return error.toString();
     }
   }
   
-  static async parseRootConfigFromFile(path: string) : Promise<string | IBosonConfig> {
-    try {
-      const data = YAML.load(path);
-      const validator = new Validator();
-      const result = await validator.validateRootConfig(data);
-      return result;
-    } catch (error) {
-      return error.toString();
-    }
-  }
-
-  static async parseLocalConfigFromFile(path: string) : Promise<string | IBosonLocalConfig> {
-    try {
-      const data = YAML.load(path);
-      const validator = new Validator();
-      const result = await validator.validateLocalConfig(data);
-      return result;
-    } catch (error) {
-      return error.toString();
-    }
-  }
-
-  static async parseRemoteConfigFromFile(path: string) : Promise<string | IBosonRemoteConfig> {
-    try {
-      const data = YAML.load(path);
-      const validator = new Validator();
-      const result = await validator.validateRemoteConfig(data);
-      return result;
-    } catch (error) {
-      return error.toString();
-    }
-  }
-
   private static buildCompleteConfig<T>(root: IBosonConfig, other: T) : T {
     // Note: this has some un-wanted interactions with typeof, just in case we
     // run into that problem in the future:
@@ -164,18 +133,20 @@ export class ConfigParser {
     return ConfigParser.buildCompleteConfig<IBosonRemoteConfig>(root, remote);
   }
 
-  /**
-   * Create a default configuration for a project with its name.
-   */
-  static defaultConfigForProject(name: string) : IBosonEnvConfig {
-    return {
-      project: name,
-      shared: {
-        chain: 'ethereum',
-        backend: 'geth',
-        datadir: '~/.boson/datadir',
-        hosts: ['127.0.0.1:30303']
-      }
-    };
-  }
 }
+
+/**
+ * Create a default configuration for a project with its name.
+ */
+export function defaultConfigForProject(name: string) : IBosonProjConfig {
+  return {
+    project: name,
+    chain: 'ethereum',
+    local: {
+      chain: 'ethereum',
+      backend: 'geth',
+      datadir: '~/.boson/datadir',
+      hosts: ['127.0.0.1:30303']
+    }
+  };
+};

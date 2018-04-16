@@ -6,11 +6,13 @@
             "properties": {
                 "backend": {
                     "description": "Backend to use. Default is geth.",
-                    "type": "string"
+                    "type": "string",
+                    "default": "geth"
                 },
                 "chain": {
                     "description": "Name of the chain. Default is ethereum.",
-                    "type": "string"
+                    "type": "string",
+                    "default": "ethereum"
                 },
                 "datadir": {
                     "description": "The directory to store accounts in.",
@@ -37,20 +39,26 @@
                     "type": "string"
                 }
             },
-            "type": "object"
+            "type": "object",
+            "required": [
+                "datadir",
+                "hosts"
+            ]
         },
         "IBosonRemoteConfig": {
             "description": "For remote networks, we cannot control how they're started. But having a\nseparate type for live configurations could make code clearer.\n\nTODO[hengchu]: I'm not super sure what the parameters should be yet.",
             "properties": {
                 "backend": {
                     "description": "Backend to use. Default is geth.",
-                    "type": "string"
+                    "type": "string",
+                    "default": "geth"
                 },
                 "chain": {
                     "description": "Name of the chain. Default is ethereum.",
-                    "type": "string"
+                    "type": "string",
+                    "default": "ethereum"
                 },
-                "datadir": {
+                "keydir": {
                     "description": "The directory to store accounts in.",
                     "type": "string"
                 },
@@ -89,32 +97,15 @@
             },
             "type": "object"
         },
-        "backend": {
-            "description": "Backend to use. Default is geth.",
-            "type": "string"
-        },
         "chain": {
             "description": "Name of the chain. Default is ethereum.",
             "type": "string"
-        },
-        "datadir": {
-            "description": "The directory to store accounts in.",
-            "type": "string"
-        },
-        "hosts": {
-            "description": "A non-empty array of host IP:port addresses, in that format.",
-            "items": {
-                "type": "string"
-            },
-            "minItems": 1,
-            "type": "array"
         }
     },
     "required": [
         "project",
         "chain",
-        "datadir",
-        "hosts"
+        "env"
     ],
     "type": "object",
     "additionalProperties": false
