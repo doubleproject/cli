@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import * as program from 'commander';
+import { version } from 'pjson';
 
 import { ETHEREUM_DATADIR } from './data';
 import Locator from './lib/utils/locator';
@@ -10,7 +11,7 @@ import * as init from './apis/init';
 import * as status from './apis/status';
 import { Geth } from './backend/ethereum/geth';
 
-program.version('0.1.0');
+program.version(version);
 
 program
   .command('list')

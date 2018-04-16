@@ -11,16 +11,21 @@ import chalk from 'chalk';
  * - Useful commands.
  */
 export function cli() {
-  console.log(chalk.dim('\n> Boson version 0.1.0\n'));
+  console.log(chalk.cyan('\n[Boson]'));
+  console.log('Version 0.1.0');
+  console.log('Backend: Geth 1.0.0 - Web3 1.0.0b3');
 
   logProjectInfo();
   logNetworkInfo();
+  console.log('\n');
 }
 
 function logProjectInfo() {
   // TODO: Make this project aware (waiting for config).
   if (true) {
-    console.log('* Current project: ' + chalk.bold('name') + '\n');
+    console.log(chalk.cyan('\n[Project]'));
+    console.log('* Project: ' + chalk.bold('name') + '\n');
+    console.log('This folder has no boson.yaml file.');
   } else {
     // console.log('This folder does not look like ');
   }
@@ -43,6 +48,7 @@ function logNetworkInfo() {
   if (false) {
     //
   } else {
+    console.log(chalk.cyan('\n[Network]'));
     console.log('No active local network');
     console.log('You may start the local network with "boson start"');
   }
