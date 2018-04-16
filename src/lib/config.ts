@@ -55,6 +55,7 @@ export interface IBosonRemoteConfig extends IBosonConfig {
   // EMPTY
 }
 
+
 /**
  * This interface represents the single config file per project.
  */

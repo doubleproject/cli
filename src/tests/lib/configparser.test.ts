@@ -78,5 +78,6 @@ test('default config should be valid', async t => {
     t.is(envConfig.shared!.backend, 'geth');
     t.is(envConfig.shared!.datadir, '~/.boson/datadir');
     t.deepEqual(envConfig.shared!.hosts, ['127.0.0.1:30303']);
+    t.is(envConfig.local!.networkid, 999);
   }
 });

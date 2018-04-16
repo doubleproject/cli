@@ -1,18 +1,18 @@
 project: default
 
-shared:
-  chain: ethereum
-  backend: geth
-  datadir: ~/.boson/datadir
-  hosts:
-    - 127.0.0.1:30303
+chain: ethereum
+backend: geth
+datadir: ~/.boson/datadir
+hosts:
+  - 127.0.0.1:30303
 
-local:
-  # Override any of the parameters from "shared" here
-  {}
-test:
-  # Override any of the parameters from "shared" here
-  {}
-main:
-  # Override any of the parameters from "shared" here
-  {}
+env: 
+  local:
+    # Override any of the parameters from "shared" here
+    networkid: 999
+  test:
+    # Override any of the parameters from "shared" here
+    {}
+  main:
+    # Override any of the parameters from "shared" here
+    {}
