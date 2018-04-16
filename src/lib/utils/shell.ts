@@ -13,3 +13,7 @@ export function executeSync(input: ISpawnInput) : SpawnSyncReturns<Buffer> {
 export function info(message: string) {
   console.log('boson' + chalk.green(' INFO ') + message);
 }
+
+export function fatal(message: string) {
+  console.log('boson' + chalk.red(' FATAL ') + message);
+}
