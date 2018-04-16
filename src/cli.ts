@@ -1,20 +1,23 @@
 #!/usr/bin/env node
 
 import * as program from 'commander';
+import { version } from 'pjson';
 
-import { ETHEREUM_DATADIR, ETHEREUM_GENESIS } from './data';
+import { ETHEREUM_DATADIR } from './data';
 import Locator from './lib/utils/locator';
 import { executeSync, info } from './lib/utils/shell';
 
+import * as init from './apis/init';
+import * as status from './apis/status';
 import { Geth } from './backend/ethereum/geth';
 
-program.version('0.1.0');
+program.version(version);
 
 program
   .command('list')
   .description('List available networks')
   .action(() => {
-    executeSync({command: 'geth', 'options': ['account', 'list']});
+    executeSync({command: 'geth', options: ['account', 'list']});
   });
 
 program
@@ -22,11 +25,7 @@ program
   .description('Initialize a blockchain by creating the genesis block')
   .action(() => {
     info('Creating genesis block for chain');
-    const command = Geth.initScript(ETHEREUM_DATADIR, ETHEREUM_GENESIS);
-    const response = executeSync(command);
-    if (response.status === 0) {
-      console.log('setup new network!');
-    }
+    init.cli();
   });
 
 program
@@ -42,19 +41,26 @@ program
   .description('Start a new node')
   .action(() => {
     const command = Geth.startScript({
-      nodiscover: true,
       datadir: ETHEREUM_DATADIR,
       identity: 'boson',
+      nodiscover: true,
       rpc: true,
     });
     executeSync(command);
+  });
+
+program
+  .command('status')
+  .description('Get system and project status')
+  .action(() => {
+    status.cli();
   });
 
 // This is just a temporary convenient entrypoint to test the locator out
 program
   .command('search <name>')
   .description('Search for the executable')
-  .action((name) => {
+  .action(name => {
     console.log(Locator.search(name));
   });
 
@@ -65,9 +71,8 @@ program
     console.log(Locator.searchUnder(name, dirs));
   });
 
-
 program.parse(process.argv);
 
 if (program.args.length === 0) {
   program.help();
-};
+}

@@ -1,3 +1,3 @@
-# Boson
+# Double CLI
 
-Boson is a command-line tool that helps you easily develop on blockchains.
+CLI tool for Double. This is a work in progress.

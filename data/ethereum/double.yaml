@@ -1,20 +1,19 @@
 project: default
-
 chain: ethereum
 
-env: 
+env:
   local:
     networkid: 999
     backend: geth
-    datadir: ~/.boson/datadir
+    datadir: ~/.double/datadir
     hosts:
       - 127.0.0.1:30303
   test:
-    keydir: ~/.boson/default/keys
+    keydir: ~/.double/default/keys
     # hosts:
       # - remoteIP:port
   main:
-    # keydir: ~/.boson/default/keys
+    # keydir: ~/.double/default/keys
     # hosts:
       # - remoteIP:port
     {}
