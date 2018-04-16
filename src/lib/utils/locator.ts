@@ -1,5 +1,5 @@
-import * as which from 'which';
 import * as path from 'path';
+import * as which from 'which';
 
 export default class Locator {
   /**
