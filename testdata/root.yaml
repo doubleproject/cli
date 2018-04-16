@@ -1,0 +1,5 @@
+chain: mylocalchain
+backend: geth
+datadir: ./
+hosts:
+  - 127.0.0.1:30303
