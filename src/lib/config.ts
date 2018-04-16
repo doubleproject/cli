@@ -91,29 +91,15 @@ export interface IProjectConfig {
 
 export class ConfigParser {
 
-  static async parseProjConfigFromFile(path: string): Promise<IProjectConfig> {
-    return await new Validator().validateProjConfig(YAML.load(path));
-  }
-
-  private static buildCompleteConfig<T>(root: IBaseEnvConfig, other: T): T {
-    // Note: this has some un-wanted interactions with typeof, just in case we
-    // run into that problem in the future:
-    // https://stackoverflow.com/questions/34201483/deep-clone-in-typescript-preserving-types
-    const otherCopy: T = _.cloneDeep(other);
-    for (const key in root) {
-      if (!(key in otherCopy)) {
-        otherCopy[key] = _.cloneDeep(root[key]);
-      }
-    }
-
-    return otherCopy;
+  public static async parseFromFile(path: string): Promise<IProjectConfig> {
+    return await new Validator().validateProjectConfig(YAML.load(path));
   }
 
   /**
    * Given a root level config, a local config, build a complete local config.
    * The local config takes preference if they both set the same field.
    */
-  private static buildCompleteLocalConfig(
+  public static buildCompleteLocalConfig(
     root: IBaseEnvConfig, local: ILocalConfig,
   ): ILocalConfig {
     return ConfigParser.buildCompleteConfig<ILocalConfig>(root, local);
@@ -123,10 +109,24 @@ export class ConfigParser {
    * Given a root level config, a remote config, build a complete remote config.
    * The remote config takes preference if they both set the same field.
    */
-  private static buildCompleteRemoteConfig(
+  public static buildCompleteRemoteConfig(
     root: IBaseEnvConfig, remote: IRemoteConfig,
   ): IRemoteConfig {
     return ConfigParser.buildCompleteConfig<IRemoteConfig>(root, remote);
+  }
+
+  private static buildCompleteConfig<T>(root: IBaseEnvConfig, other: T): T {
+    // Note: this has some un-wanted interactions with typeof, just in case we
+    // run into that problem in the future:
+    // https://stackoverflow.com/questions/34201483/deep-clone-in-typescript-preserving-types
+    const otherCopy: any = _.cloneDeep(other);
+    for (const key in root) {
+      if (!(key in otherCopy)) {
+        otherCopy[key] = _.cloneDeep((root as any)[key]);
+      }
+    }
+
+    return otherCopy as T;
   }
 }
 

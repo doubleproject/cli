@@ -25,7 +25,7 @@ function logProjectInfo() {
   if (true) {
     console.log(chalk.cyan('\n[Project]'));
     console.log('* Project: ' + chalk.bold('name') + '\n');
-    console.log('This folder has no boson.yaml file.');
+    console.log('This folder has no double.yaml file.');
   } else {
     // console.log('This folder does not look like ');
   }

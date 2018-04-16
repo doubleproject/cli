@@ -1,8 +1,7 @@
 project: default
-
 chain: ethereum
 
-env: 
+env:
   local:
     networkid: 999
     backend: geth

@@ -7,7 +7,7 @@ import { error, executeSync } from '../lib/utils/shell';
 /**
  * CLI entrypoint for initializing a project.
  *
- * This creates a boson.yaml file in the current folder that contains configs
+ * This creates a double.yaml file in the current folder that contains configs
  * for the project. If such file already exists, it will be used. Then if a
  * local environment is specified, the network will be initialized.
  */
@@ -16,13 +16,13 @@ export function cli() {
     {
       title: 'Setting up Boson configuration',
       skip: () => {
-        if (fs.existsSync('boson.yaml')) {
-          return 'Existing boson.yaml file found and will be used';
+        if (fs.existsSync('double.yaml')) {
+          return 'Existing double.yaml file found and will be used';
         }
         return undefined;
       },
       task: (ctx, task) => {
-        task.title = 'Created Boson config file at boson.yaml';
+        task.title = 'Created Boson config file at double.yaml';
       },
     },
     {
