@@ -1,5 +1,7 @@
 import { ConfigParser } from '../../lib/config';
+import { ETHEREUM_DATADIR } from '../../data';
 import test from 'ava';
+import * as path from 'path';
 
 test('root.yaml should be parseable and valid', async t => {
   const data = await ConfigParser.parseRootConfigFromFile('testdata/root.yaml');
@@ -62,5 +64,19 @@ test('complete remote yaml should have root properties', async t => {
     t.is(completeRemoteConfig.backend, rootConfig.backend);
     t.deepEqual(completeRemoteConfig.hosts, rootConfig.hosts);
     t.is(completeRemoteConfig.datadir, remoteConfig.datadir);
+  }
+});
+
+test('default config should be valid', async t => {
+  const defaultConfigPath = path.join(ETHEREUM_DATADIR, 'boson.yaml');
+  const rootConfig = await ConfigParser.parseRootConfigFromFile(defaultConfigPath);
+
+  if (typeof rootConfig === 'string') {
+    t.fail('Failed to parse and validate bosom.yaml');
+  } else {
+    t.is(rootConfig.chain, 'ethereum');
+    t.is(rootConfig.backend, 'geth');
+    t.is(rootConfig.datadir, '~/.boson/datadir');
+    t.deepEqual(rootConfig.hosts, ['127.0.0.1:30303']);
   }
 });
