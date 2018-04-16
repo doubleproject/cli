@@ -8,7 +8,7 @@ export default class Locator {
    *
    * @param {string} name - The name of the executable
    */
-  static search(name: string) : string | null {
+  public static search(name: string): string | null {
     return which.sync(name, {nothrow: true});
   }
 
@@ -20,8 +20,8 @@ export default class Locator {
    * @param {string} name - The name of the executable
    * @param {[string]} dirs - The array of directories to search in
    */
-  static searchUnder(name: string, dirs: string[]) : string | null {
-    const searchPaths : string = dirs.join(path.delimiter);
-    return which.sync(name, {nothrow: true, path:searchPaths});
+  public static searchUnder(name: string, dirs: string[]): string | null {
+    const searchPaths = dirs.join(path.delimiter);
+    return which.sync(name, {nothrow: true, path: searchPaths});
   }
 }

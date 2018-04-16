@@ -90,26 +90,25 @@ export interface IBosonProjConfig {
 }
 
 export class ConfigParser {
-  static async parseProjConfigFromFile(path: string) : Promise<string | IBosonProjConfig> {
+
+  static async parseProjConfigFromFile(path: string): Promise<string | IBosonProjConfig> {
     try {
       const data = YAML.load(path);
       const validator = new Validator();
-      const result = await validator.validateProjConfig(data);
-      return result;
+      return await validator.validateProjConfig(data);
     } catch (error) {
       return error.toString();
     }
   }
 
-  private static buildCompleteConfig<T>(root: IBosonConfig, other: T) : T {
+  private static buildCompleteConfig<T>(root: IBosonConfig, other: T): T {
     // Note: this has some un-wanted interactions with typeof, just in case we
     // run into that problem in the future:
     // https://stackoverflow.com/questions/34201483/deep-clone-in-typescript-preserving-types
-    var otherCopy : any = _.cloneDeep(other);
-    for (let key in root) {
+    const otherCopy = _.cloneDeep(other);
+    for (const key in root) {
       if (!(key in otherCopy)) {
-        otherCopy[key] =
-          _.cloneDeep((<any>root)[key]);
+        otherCopy[key] = _.cloneDeep((<any>root)[key]);
       }
     }
 
@@ -120,8 +119,9 @@ export class ConfigParser {
    * Given a root level config, a local config, build a complete local config.
    * The local config takes preference if they both set the same field.
    */
-  static buildCompleteLocalConfig(root: IBosonConfig,
-                                  local: IBosonLocalConfig) : IBosonLocalConfig {
+  private static buildCompleteLocalConfig(
+    root: IBosonConfig, local: IBosonLocalConfig,
+  ): IBosonLocalConfig {
     return ConfigParser.buildCompleteConfig<IBosonLocalConfig>(root, local);
   }
 
@@ -129,17 +129,17 @@ export class ConfigParser {
    * Given a root level config, a remote config, build a complete remote config.
    * The remote config takes preference if they both set the same field.
    */
-  static buildCompleteRemoteConfig(root: IBosonConfig,
-                                   remote: IBosonRemoteConfig) : IBosonRemoteConfig {
+  private static buildCompleteRemoteConfig(
+    root: IBosonConfig, remote: IBosonRemoteConfig,
+  ): IBosonRemoteConfig {
     return ConfigParser.buildCompleteConfig<IBosonRemoteConfig>(root, remote);
   }
-
 }
 
 /**
  * Create a default configuration for a project with its name.
  */
-export function defaultConfigForProject(name: string) : IBosonProjConfig {
+export function defaultConfigForProject(name: string): IBosonProjConfig {
   return {
     project: name,
     chain: 'ethereum',
@@ -147,7 +147,7 @@ export function defaultConfigForProject(name: string) : IBosonProjConfig {
       chain: 'ethereum',
       backend: 'geth',
       datadir: '~/.boson/datadir',
-      hosts: ['127.0.0.1:30303']
-    }
+      hosts: ['127.0.0.1:30303'],
+    },
   };
-};
+}
