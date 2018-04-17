@@ -23,6 +23,7 @@ export default class Config {
     }
 
     const config = Config.parseFromFile(ETHEREUM_ROOTCFG);
+    config.project = name;
     fs.writeFileSync('double.yaml', YAML.stringify(config));
     return config;
   }
