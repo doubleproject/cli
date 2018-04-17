@@ -39,6 +39,10 @@ export interface ILocalConfig extends IBaseEnvConfig {
    * Gas price multiplier (in Wei).
    */
   gasPrice?: number;
+  /**
+   * Location of the genesis.json file, if there should be one.
+   */
+  genesis?: string;
 }
 
 /**

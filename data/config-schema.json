@@ -22,6 +22,10 @@
           "description": "Gas price multiplier (in Wei).",
           "type": "number"
         },
+        "genesis": {
+          "description": "Location of the genesis.json file. Default is datadir/genesis.json.",
+          "type": "string"
+        },
         "hosts": {
           "description": "A non-empty array of host IP:port addresses, in that format.",
           "items": {
@@ -31,7 +35,7 @@
           "type": "array"
         },
         "networkid": {
-          "description": "Network id.",
+          "description": "Network ID.",
           "type": "number"
         },
         "nodeName": {
