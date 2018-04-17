@@ -1,6 +1,6 @@
 import * as Ajv from 'ajv';
 
-import * as Schema from '../../schemas/double.json';
+import * as Schema from '../../data/config-schema.json';
 import {
   IBaseEnvConfig, ILocalConfig, IProjectConfig, IRemoteConfig,
 } from './schema';

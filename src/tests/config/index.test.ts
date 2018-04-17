@@ -13,6 +13,13 @@ test('should be able to initialize project config', t => {
   t.true(fs.existsSync('double.yaml'));
 });
 
+test('init project config should fail with existing double.yaml', t => {
+  fs.writeFileSync('double.yaml', '');
+  t.throws(() => {
+    Config.init('double-test');
+  });
+});
+
 test('default config should be valid', t => {
   const defaultConfigPath = path.join(ETHEREUM_DATADIR, 'double.yaml');
   const cfg = Config.parseFromFile(defaultConfigPath);
