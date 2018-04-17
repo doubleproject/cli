@@ -1,7 +1,10 @@
 import * as fs from 'fs';
+import * as path from 'path';
+
 import * as Listr from 'listr';
 
 import { Geth } from '../backend/ethereum/geth';
+import Config from '../config';
 import { error, executeSync } from '../lib/utils/shell';
 
 /**
@@ -14,19 +17,26 @@ import { error, executeSync } from '../lib/utils/shell';
 export function cli() {
   const tasks = new Listr([
     {
-      title: 'Setting up Boson configuration',
+      title: 'Setting up Double configuration',
       skip: () => {
         if (fs.existsSync('double.yaml')) {
-          return 'Existing double.yaml file found and will be used';
+          return 'Using existing double.yaml file';
         }
         return undefined;
       },
       task: (ctx, task) => {
-        task.title = 'Created Boson config file at double.yaml';
+        ctx.config = Config.init(path.basename(path.resolve()));
+        task.title = 'Created double.yaml with default configuration';
       },
     },
     {
       title: 'Checking genesis block configuration',
+      skip: () => {
+        if (fs.existsSync('')) {
+          return 'Found existing genesis.json file';
+        }
+        return undefined;
+      },
       task: (ctx, task) => {
         return;
       },

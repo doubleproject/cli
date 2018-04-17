@@ -1,6 +1,9 @@
+import * as fs from 'fs';
+
 import * as _ from 'lodash';
 import * as YAML from 'yamljs';
 
+import { ETHEREUM_ROOTCFG } from '../data';
 import {
   IBaseEnvConfig, ILocalConfig, IProjectConfig, IRemoteConfig,
 } from './schema';
@@ -8,8 +11,47 @@ import Validator from './validator';
 
 export default class Config {
 
-  public static async parseFromFile(path: string): Promise<IProjectConfig> {
-    return await new Validator().validateProjectConfig(YAML.load(path));
+  /**
+   * Initializes a project.
+   *
+   * This creates a double.yaml file in the current folder. If such a file
+   * already exists, an error is thrown.
+   */
+  public static init(name: string): IProjectConfig {
+    if (fs.existsSync('double.yaml')) {
+      throw new Error('double.yaml already exists.');
+    }
+
+    const config = Config.parseFromFile(ETHEREUM_ROOTCFG);
+    fs.writeFileSync('double.yaml', YAML.stringify(config));
+    return config;
+  }
+
+  /**
+   * Gets the current project configuration.
+   *
+   * @param {boolean} nocascade - If true, only try to read from double.yaml.
+   *     If omitted or false, this function will try to read from the default
+   *     config file when double.yaml doesn't exist in the current folder.
+   * @returns {IProjectConfig} The project configuration.
+   */
+  public static get(nocascade?: boolean): IProjectConfig {
+    if (!fs.existsSync('double.yaml')) {
+      if (nocascade) {
+        throw new Error('double.yaml not found in current directory');
+      }
+      return Config.parseFromFile(ETHEREUM_ROOTCFG);
+    }
+
+    try {
+      return Config.parseFromFile('double.yaml');
+    } catch {
+      throw new Error('Invalid double.yaml');
+    }
+  }
+
+  public static parseFromFile(path: string): IProjectConfig {
+    return new Validator().validateProjectConfig(YAML.load(path));
   }
 
   /**

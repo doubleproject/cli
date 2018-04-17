@@ -4,9 +4,9 @@ import * as path from 'path';
 import Config from '../../config';
 import { ETHEREUM_DATADIR } from '../../data';
 
-test('default config should be valid', async t => {
+test('default config should be valid', t => {
   const defaultConfigPath = path.join(ETHEREUM_DATADIR, 'double.yaml');
-  const cfg = await Config.parseFromFile(defaultConfigPath);
+  const cfg = Config.parseFromFile(defaultConfigPath);
 
   t.is(cfg.project, 'default');
   t.is(cfg.chain, 'ethereum');

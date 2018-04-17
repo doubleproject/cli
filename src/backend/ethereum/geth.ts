@@ -31,28 +31,28 @@ export class Geth {
 
   /**
    * Generates shell command to initialize a genesis block.
-   * 
+   *
    * @param {string} datadir - The data directory.
    * @param {string} genesis - The path to the genesis.json file.
    * @returns {ISpawnInput} The initialization script.
    */
-  static initScript(datadir: string, genesis: string) : ISpawnInput {
+  public static initScript(datadir: string, genesis: string): ISpawnInput {
     return {command: 'geth', options: ['--datadir', datadir, 'init', genesis]};
   }
 
-  static cleanup(datadir: string, callback?: (error: Error) => void) {
+  public static cleanup(datadir: string, callback?: (error: Error) => void) {
     callback ? rimraf(datadir, callback) : rimraf.sync(datadir);
   }
 
   /**
    * Generates shell command to start a node.
-   * 
+   *
    * @param {IGethFlags} flags - Geth flags to pass to the start command.
    * @returns {ISpawnInput} The start script.
    */
-  static startScript(flags: IGethFlags) : ISpawnInput {
-    let options = ['console'];
-    
+  public static startScript(flags: IGethFlags): ISpawnInput {
+    const options = ['console'];
+
     if (flags.nodiscover) {
       options.push('--nodiscover');
     }
@@ -81,7 +81,7 @@ export class Geth {
       options.push('--networkid');
       options.push(flags.networkid.toString());
     }
-    
+
     if (flags.rpc) {
       options.push('--rpc');
       if (flags.rpcaddr) {
