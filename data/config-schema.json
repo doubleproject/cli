@@ -1,46 +1,50 @@
 {
   "$schema": "http://json-schema.org/draft-06/schema#",
   "definitions": {
-    "ILocalConfig": {
-      "description": "For local dev networks, we can control what their parameters are. These can\nbe used to fill the parameters to IGethFlags, for example, when we start a\nlocal network. But they should be generic enough to support all the backends.\n\nTODO[hengchu]: I'm not super sure what the parameters should be yet, but\nhere's a couple.",
+    "IEnvConfig": {
+      "description": "Environment-specific configuration",
       "properties": {
         "backend": {
-          "description": "Backend to use. Default is geth.",
+          "description": "Backend for a local network",
           "type": "string",
           "default": "geth"
         },
         "chain": {
-          "description": "Name of the chain. Default is ethereum.",
+          "description": "Name of the chain",
           "type": "string",
           "default": "ethereum"
         },
         "datadir": {
-          "description": "The directory to store accounts in.",
+          "description": "Data directory relative to the root of the project",
           "type": "string"
         },
         "gasPrice": {
-          "description": "Gas price multiplier (in Wei).",
+          "description": "Gas price multiplier in Wei",
           "type": "number"
         },
-        "genesis": {
-          "description": "Location of the genesis.json file. Default is datadir/genesis.json.",
-          "type": "string"
-        },
         "hosts": {
-          "description": "A non-empty array of host IP:port addresses, in that format.",
+          "description": "Host IP:port addresses, in that format",
           "items": {
             "type": "string"
           },
           "minItems": 1,
           "type": "array"
         },
-        "networkid": {
-          "description": "Network ID.",
+        "local": {
+          "description": "Whether the environment is for a local node",
+          "type": "boolean"
+        },
+        "networkID": {
+          "description": "Network ID",
           "type": "number"
         },
         "nodeName": {
-          "description": "Custom node name.",
+          "description": "Name of the local node",
           "type": "string"
+        },
+        "production": {
+          "description": "Whether the environment is for production",
+          "type": "boolean"
         }
       },
       "type": "object",
@@ -48,68 +52,34 @@
         "datadir",
         "hosts"
       ]
-    },
-    "IRemoteConfig": {
-      "description": "For remote networks, we cannot control how they're started. But having a\nseparate type for live configurations could make code clearer.\n\nTODO[hengchu]: I'm not super sure what the parameters should be yet.",
-      "properties": {
-        "backend": {
-          "description": "Backend to use. Default is geth.",
-          "type": "string",
-          "default": "geth"
-        },
-        "chain": {
-          "description": "Name of the chain. Default is ethereum.",
-          "type": "string",
-          "default": "ethereum"
-        },
-        "keydir": {
-          "description": "The directory to store accounts in.",
-          "type": "string"
-        },
-        "hosts": {
-          "description": "A non-empty array of host IP:port addresses, in that format.",
-          "items": {
-            "type": "string"
-          },
-          "minItems": 1,
-          "type": "array"
-        }
-      },
-      "type": "object"
     }
   },
-  "description": "This interface represents the single config file per project.",
+  "description": "Project configuration",
   "properties": {
-    "project": {
-      "description": "The name of the project.",
+    "chain": {
+      "description": "Project-level chain name",
       "type": "string"
     },
-    "env": {
-      "properties": {
-        "local": {
-          "$ref": "#/definitions/ILocalConfig",
-          "description": "The local network overrides."
-        },
-        "main": {
-          "$ref": "#/definitions/IRemoteConfig",
-          "description": "The main network overrides."
-        },
-        "test": {
-          "$ref": "#/definitions/IRemoteConfig",
-          "description": "The test network overrides."
-        }
-      },
-      "type": "object"
+    "backend": {
+      "description": "Project-level local network backend",
+      "type": "string"
     },
-    "chain": {
-      "description": "Name of the chain. Default is ethereum.",
+    "envs": {
+      "patternProperties": {
+        "^[a-zA-Z0-9-_]*$": {
+          "$ref": "#/definitions/IEnvConfig",
+          "description": "Configuration for a specific environment"
+        }
+      }
+    },
+    "project": {
+      "description": "Name of the project",
       "type": "string"
     }
   },
   "required": [
-    "project",
-    "chain",
-    "env"
+    "envs",
+    "project"
   ],
   "type": "object",
   "additionalProperties": false

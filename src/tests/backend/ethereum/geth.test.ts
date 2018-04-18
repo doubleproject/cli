@@ -1,6 +1,6 @@
 import test from 'ava';
 
-import { Geth } from '../../../backend/ethereum/geth';
+import Geth from '../../../backend/ethereum/geth';
 
 test('start script should contain correct flags', t => {
   const flags = {
@@ -17,7 +17,7 @@ test('start script should contain correct flags', t => {
       'console',
       '--nodiscover', '--port', '30304', '--identity', 'boson',
       '--rpc', '--rpcport', '8546', '--rpcapi', 'web3,eth',
-    ]
+    ],
   });
 });
 
@@ -33,6 +33,6 @@ test('start script should ignore RPC flags if RPC is not enabled', t => {
     command: 'geth',
     options: [
       'console', '--nodiscover', '--port', '30304', '--identity', 'boson',
-    ]
+    ],
   });
 });

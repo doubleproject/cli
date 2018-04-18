@@ -1,10 +1,9 @@
 import * as fs from 'fs';
-import * as path from 'path';
 
 import test from 'ava';
 
 import Config from '../../config';
-import { ETHEREUM_DATADIR } from '../../data';
+import { ETHEREUM_DEFAULT_CFG } from '../../data';
 
 test.serial('should be able to initialize project config', t => {
   const cfg = Config.init('double-test');
@@ -30,16 +29,14 @@ test.serial('should be able to load initialized project config', t => {
 });
 
 test('default config should be valid', t => {
-  const defaultConfigPath = path.join(ETHEREUM_DATADIR, 'double.yaml');
-  const cfg = Config.parseFromFile(defaultConfigPath);
+  const cfg = Config.parseFromFile(ETHEREUM_DEFAULT_CFG);
 
   t.is(cfg.project, 'default');
   t.is(cfg.chain, 'ethereum');
-  t.is(cfg.env.local!.backend, 'geth');
-  t.is(cfg.env.local!.datadir, '~/.double/datadir');
-  t.is(cfg.env.test!.keydir, '~/.double/default/keys');
-  t.deepEqual(cfg.env.local!.hosts, ['127.0.0.1:30303']);
-  t.is(cfg.env.local!.networkid, 999);
+  t.is(cfg.envs.local!.backend, 'geth');
+  t.is(cfg.envs.local!.datadir, '~/.double/ethereum');
+  t.deepEqual(cfg.envs.local!.hosts, ['127.0.0.1:30303']);
+  t.is(cfg.envs.local!.networkID, 999);
 });
 
 test.afterEach.always(t => {

@@ -3,7 +3,8 @@ import * as path from 'path';
 
 import * as Listr from 'listr';
 
-import { Geth } from '../backend/ethereum/geth';
+import { createGenesis } from '../backend/ethereum';
+import Geth from '../backend/ethereum/geth';
 import Config from '../config';
 import { error, executeSync } from '../lib/utils/shell';
 
@@ -38,11 +39,15 @@ export function cli() {
         return undefined;
       },
       task: (ctx, task) => {
-        return;
+        createGenesis('');
+        task.title = 'Created genesis.json file';
       },
     },
     {
       title: 'Creating local test network',
+      skip: () => {
+        return undefined;
+      },
       task: (ctx, task) => {
         const command = Geth.initScript('./fixtures/ethereum', './fixtures/ethereum/genesis.json');
         const response = executeSync(command);

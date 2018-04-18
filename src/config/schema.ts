@@ -1,93 +1,74 @@
-export interface IBaseEnvConfig {
+export interface IEnvConfig {
+  /** Name of the chain. Default is ethereum. */
+  chain?: string;
+
+  /** Whether this is a local environment. */
+  local?: boolean;
+
+  /** Whether this is a production environment. */
+  production?: boolean;
+
   /**
-   * Name of the chain. Default is ethereum.
-   */
-  chain: string;
-  /**
-   * Backend to use. Default is geth.
-   */
-  backend?: string;
-  /**
-   * The directory to store accounts in.
+   * Data directory relative to the root of the project.
+   *
+   * For local nodes, this directory will hold everything for the network.
+   * For remote nodes, this directory will hold key files for accounts.
    */
   datadir: string;
+
   /**
    * A non-empty array of host IP:port addresses, in that format.
+   *
    * @minItems 1
    */
   hosts: string[];
-}
 
-/**
- * For local dev networks, we can control what their parameters are. These can
- * be used to fill the parameters to IGethFlags, for example, when we start a
- * local network. But they should be generic enough to support all the backends.
- *
- * TODO[hengchu]: I'm not super sure what the parameters should be yet, but
- * here's a couple.
- */
-export interface ILocalConfig extends IBaseEnvConfig {
-  /**
-   * Custom node name.
-   */
+  /** Backend to use for local nodes. Default is geth. */
+  backend?: string;
+
+  /** Custom node name, for local nodes. */
   nodeName?: string;
-  /**
-   * Network id.
-   */
-  networkid?: number;
-  /**
-   * Gas price multiplier (in Wei).
-   */
-  gasPrice?: number;
-  /**
-   * Location of the genesis.json file, if there should be one.
-   */
-  genesis?: string;
-}
 
-/**
- * For remote networks, we cannot control how they're started. But having a
- * separate type for live configurations could make code clearer.
- *
- * TODO[hengchu]: I'm not super sure what the parameters should be yet.
- */
-export interface IRemoteConfig extends IBaseEnvConfig {
-  /**
-   * A path to the directory storing all keyfiles for this remote network.
-   */
-  keydir: string;
+  /** Network ID. */
+  networkID?: number;
+
+  /** Gas price multiplier (in Wei). */
+  gasPrice?: number;
 }
 
 interface IEnvs {
-  /**
-   * The local network overrides.
-   */
-  local?: ILocalConfig;
 
   /**
-   * The test network overrides.
+   * A dictionary of all environments.
+   *
+   * A project can have multiple local or remote environments. However, they
+   * must have different names and have different datadirs.
    */
-  test?: IRemoteConfig;
-
-  /**
-   * The main network overrides.
-   */
-  main?: IRemoteConfig;
+  [Key: string]: IEnvConfig;
 }
 
 /**
  * This interface represents the single config file per project.
  */
 export interface IProjectConfig {
-  /**
-   * The name of the project.
-   */
+
+  /** Name of the project. */
   project: string;
 
   /**
    * Name of the chain. Default is ethereum.
+   *
+   * For all environments that don't specify a chain, this will be used.
    */
-  chain: string;
+  chain?: string;
 
-  env: IEnvs;
+  /**
+   * Local backend to use. Default is geth.
+   *
+   * For all local networks that don't specify a backend, this will be used.
+   */
+  backend?: string;
+
+  /** Environments. */
+  envs: IEnvs;
 }

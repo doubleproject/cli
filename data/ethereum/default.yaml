@@ -1,0 +1,11 @@
+project: default
+chain: ethereum
+backend: geth
+envs:
+  local:
+    networkID: 999
+    backend: geth
+    datadir: ~/.double/ethereum
+    local: true
+    hosts:
+      - 127.0.0.1:30303

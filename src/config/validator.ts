@@ -1,9 +1,7 @@
 import * as Ajv from 'ajv';
 
 import * as Schema from '../../data/config-schema.json';
-import {
-  IBaseEnvConfig, ILocalConfig, IProjectConfig, IRemoteConfig,
-} from './schema';
+import { IEnvConfig, IProjectConfig } from './schema';
 
 export default class Validator {
 
@@ -18,16 +16,8 @@ export default class Validator {
     this.ajv.addSchema(Schema, 'double.json');
   }
 
-  public validateRemoteConfig(config: any): IRemoteConfig {
-    return this.validateWith<IRemoteConfig>(Schema, config);
-  }
-
-  public validateLocalConfig(config: any): ILocalConfig {
-    return this.validateWith<ILocalConfig>(Schema, config);
-  }
-
-  public validateRootConfig(config: any): IBaseEnvConfig {
-    return this.validateWith<IBaseEnvConfig>(Schema, config);
+  public validateEnvConfig(config: any): IEnvConfig {
+    return this.validateWith<IEnvConfig>(Schema, config);
   }
 
   public validateProjectConfig(config: any): IProjectConfig {

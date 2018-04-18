@@ -27,7 +27,7 @@ interface IGethFlags {
   networkid?: number;
 }
 
-export class Geth {
+export default class Geth {
 
   /**
    * Generates shell command to initialize a genesis block.
