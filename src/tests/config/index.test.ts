@@ -1,6 +1,5 @@
-import * as fs from 'fs';
-
 import test from 'ava';
+import * as fs from 'fs-extra';
 
 import Config from '../../config';
 import { ETHEREUM_DEFAULT_CFG } from '../../data';
@@ -40,7 +39,5 @@ test('default config should be valid', t => {
 });
 
 test.afterEach.always(t => {
-  if (fs.existsSync('double.yaml')) {
-    fs.unlinkSync('double.yaml');
-  }
+  fs.removeSync('double.yaml');
 });
