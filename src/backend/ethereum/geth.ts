@@ -1,4 +1,6 @@
-import * as rimraf from 'rimraf';
+import * as path from 'path';
+
+import * as fs from 'fs-extra';
 
 import { ISpawnInput } from '../../lib/utils/shell';
 
@@ -32,16 +34,20 @@ export default class Geth {
   /**
    * Generates shell command to initialize a genesis block.
    *
+   * This function assumes that the genesis.json file is at the root level of
+   * the data directory.
+   *
    * @param {string} datadir - The data directory.
-   * @param {string} genesis - The path to the genesis.json file.
    * @returns {ISpawnInput} The initialization script.
    */
-  public static initScript(datadir: string, genesis: string): ISpawnInput {
+  public static initScript(datadir: string): ISpawnInput {
+    const genesis = path.join(datadir, 'genesis.json');
     return {command: 'geth', options: ['--datadir', datadir, 'init', genesis]};
   }
 
   public static cleanup(datadir: string, callback?: (error: Error) => void) {
-    callback ? rimraf(datadir, callback) : rimraf.sync(datadir);
+    const dir = path.join(datadir, 'geth');
+    callback ? fs.remove(dir, callback) : fs.removeSync(dir);
   }
 
   /**

@@ -2,6 +2,13 @@ import test from 'ava';
 
 import Geth from '../../../backend/ethereum/geth';
 
+test('init script should contain correct flags', t => {
+  t.deepEqual(Geth.initScript('datadir'), {
+    command: 'geth',
+    options: ['--datadir', 'datadir', 'init', 'datadir/genesis.json'],
+  });
+});
+
 test('start script should contain correct flags', t => {
   const flags = {
     nodiscover: true,
