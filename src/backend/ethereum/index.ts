@@ -14,5 +14,6 @@ export function createGenesis(folder: string) {
   if (fs.existsSync(file)) {
     throw new Error('genesis file already exists');
   }
+  fs.ensureDirSync(folder);
   fs.copyFileSync(ETHEREUM_PROJECT_GENESIS, file);
 }

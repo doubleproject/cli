@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import * as fs from 'fs-extra';
 import * as path from 'path';
 
 import * as Listr from 'listr';
@@ -11,19 +11,19 @@ import { error, executeSync } from '../lib/utils/shell';
 
 function localSetupTask(name: string, config: IEnvConfig): Listr.ListrTask {
   return {
-    title: `Setting up environment ${name}`,
+    title: `Setting up ${name} environment`,
     task: (ctx, task) => {
       return new Listr([{
         title: 'Checking genesis block configuration',
         skip: () => {
-          if (fs.existsSync(path.join(ctx.config.datadir, 'genesis.json'))) {
-            return 'Found existing genesis.json file for ${name} environment';
+          if (fs.existsSync(path.join(config.datadir, 'genesis.json'))) {
+            return 'Found existing genesis.json file';
           }
           return undefined;
         },
         task: (_, subtask) => {
-          createGenesis(ctx.config.datadir);
-          task.title = `Created genesis.json file for ${name} environment`;
+          createGenesis(config.datadir);
+          subtask.title = `Created genesis.json file for ${name} environment`;
         },
       }, {
         title: `Initializing genesis block for ${name} network`,
@@ -31,10 +31,10 @@ function localSetupTask(name: string, config: IEnvConfig): Listr.ListrTask {
           return undefined;
         },
         task: (_, subtask) => {
-          const command = Geth.initScript(ctx.config.datadir);
+          const command = Geth.initScript(config.datadir);
           const response = executeSync(command);
           if (response.status === 0) {
-            task.title = 'Created local test network';
+            subtask.title = 'Created local test network';
           } else {
             throw new Error('Unable to initialize local network');
           }
@@ -63,8 +63,9 @@ function remoteSetupTask(name: string, config: IEnvConfig): Listr.ListrTask {
 export function cli() {
   const tasks = new Listr([{
     title: 'Setting up Double configuration',
-    skip: () => {
+    skip: ctx => {
       if (fs.existsSync('double.yaml')) {
+        ctx.config = Config.get();
         return 'Using existing double.yaml file';
       }
       return undefined;
@@ -78,10 +79,11 @@ export function cli() {
     task: (ctx, task) => {
       const subtasks = [];
       const envs = ctx.config.envs;
-      for (const env of envs) {
+      for (const env in envs) {
         if (envs.hasOwnProperty(env)) {
-          const subtask = env.local ?
-            localSetupTask(env, envs[env]) : remoteSetupTask(env, envs[env]);
+          const data = envs[env];
+          const subtask = data.local ?
+            localSetupTask(env, data) : remoteSetupTask(env, data);
           subtasks.push(subtask);
         }
       }
