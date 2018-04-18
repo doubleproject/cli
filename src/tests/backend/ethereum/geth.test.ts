@@ -14,17 +14,31 @@ test('start script should contain correct flags', t => {
     nodiscover: true,
     rpc: true,
     rpcport: 8546,
+    rpcaddr: '0.0.0.0',
+    rpccorsdomain: ['doublechain.org', 'google.com'],
     rpcapi: ['web3', 'eth'],
     port: 30304,
-    identity: 'boson',
+    maxpeers: 10,
+    identity: 'double',
+    datadir: 'double-data',
+    networkid: 1,
   };
   t.deepEqual(Geth.startScript(flags), {
     command: 'geth',
     options: [
       'console',
-      '--nodiscover', '--port', '30304', '--identity', 'boson',
-      '--rpc', '--rpcport', '8546', '--rpcapi', 'web3,eth',
+      '--nodiscover', '--maxpeers', '10', '--port', '30304', '--identity',
+      'double', '--datadir', 'double-data', '--networkid', '1',
+      '--rpc', '--rpcaddr', '0.0.0.0', '--rpcport', '8546', '--rpcapi',
+      'web3,eth', '--rpccorsdomain', 'doublechain.org,google.com',
     ],
+  });
+});
+
+test('start script without flags should be correct', t => {
+  t.deepEqual(Geth.startScript({}), {
+    command: 'geth',
+    options: ['console'],
   });
 });
 
