@@ -74,6 +74,12 @@ export default class Config {
     return envcfg;
   }
 
+  /**
+   * Loads a project configuration from a file.
+   *
+   * @param {string} path - The path at which the file is located.
+   * @returns {IProjectConfig} - The project configuration.
+   */
   public static parseFromFile(path: string): IProjectConfig {
     return new Validator().validateProjectConfig(YAML.load(path));
   }
