@@ -47,9 +47,6 @@ interface IEnvs {
   [Key: string]: IEnvConfig;
 }
 
-/**
- * This interface represents the single config file per project.
- */
 export interface IProjectConfig {
 
   /** Name of the project. */
