@@ -1,0 +1,11 @@
+project: replace_me
+chain: ethereum
+backend: geth
+envs:
+  local:
+    networkID: 999
+    backend: geth
+    datadir: double_data
+    local: true
+    hosts:
+      - 127.0.0.1:30303

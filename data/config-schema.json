@@ -1,0 +1,86 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "definitions": {
+    "IEnvConfig": {
+      "description": "Environment-specific configuration",
+      "properties": {
+        "backend": {
+          "description": "Backend for a local network",
+          "type": "string",
+          "default": "geth"
+        },
+        "chain": {
+          "description": "Name of the chain",
+          "type": "string",
+          "default": "ethereum"
+        },
+        "datadir": {
+          "description": "Data directory relative to the root of the project",
+          "type": "string"
+        },
+        "gasPrice": {
+          "description": "Gas price multiplier in Wei",
+          "type": "number"
+        },
+        "hosts": {
+          "description": "Host IP:port addresses, in that format",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "local": {
+          "description": "Whether the environment is for a local node",
+          "type": "boolean"
+        },
+        "networkID": {
+          "description": "Network ID",
+          "type": "number"
+        },
+        "nodeName": {
+          "description": "Name of the local node",
+          "type": "string"
+        },
+        "production": {
+          "description": "Whether the environment is for production",
+          "type": "boolean"
+        }
+      },
+      "type": "object",
+      "required": [
+        "datadir",
+        "hosts"
+      ]
+    }
+  },
+  "description": "Project configuration",
+  "properties": {
+    "chain": {
+      "description": "Project-level chain name",
+      "type": "string"
+    },
+    "backend": {
+      "description": "Project-level local network backend",
+      "type": "string"
+    },
+    "envs": {
+      "patternProperties": {
+        "^[a-zA-Z0-9-_]*$": {
+          "$ref": "#/definitions/IEnvConfig",
+          "description": "Configuration for a specific environment"
+        }
+      }
+    },
+    "project": {
+      "description": "Name of the project",
+      "type": "string"
+    }
+  },
+  "required": [
+    "envs",
+    "project"
+  ],
+  "type": "object",
+  "additionalProperties": false
+}
