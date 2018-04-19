@@ -5,14 +5,15 @@
  * monitor process may modify the file and add more objects to it.
  */
 
-import * as express      from 'express';
-import * as winston      from 'winston';
-import * as program      from 'commander';
-import * as readline     from 'readline';
-import * as fs           from 'fs';
-import * as request      from 'request';
-import * as bodyParser   from 'body-parser';
+import * as bodyParser from 'body-parser';
+import * as program from 'commander';
+import * as express from 'express';
+import * as readline from 'readline';
+import * as request from 'request';
+import * as winston from 'winston';
+
 import * as ChildProcess from 'child_process';
+import * as fs from 'fs';
 
 interface IMonitoredNodeConfig {
   /**
@@ -30,13 +31,12 @@ interface IMonitoredNodeConfig {
    * The arguments that should be passed to the cmd above, seperated by space.
    */
   reviveArgs?: string;
-};
-
+}
 
 /**
  * Takes any object and checks if it conforms to the config interface.
  */
-function validateMonitoredNodeConfig(data: any) : IMonitoredNodeConfig | undefined {
+function validateMonitoredNodeConfig(data: any): IMonitoredNodeConfig | undefined {
   if (!data.hasOwnProperty('address')) {
     return undefined;
   }
@@ -56,7 +56,7 @@ function validateMonitoredNodeConfig(data: any) : IMonitoredNodeConfig | undefin
   }
 
   return data;
-};
+}
 
 /**
  * An internal interface representing the state we keep track of for each
@@ -70,7 +70,7 @@ interface IMonitoredNodeStatus {
   networkId?: string;
   reviveCmd?: string;
   reviveArgs?: string[];
-};
+}
 
 /**
  * An internal interface representing the response of the ping command to the
@@ -79,7 +79,7 @@ interface IMonitoredNodeStatus {
 interface INetVersionResponse {
   id: number;
   result: string;
-};
+}
 
 /**
  * The actual monitor implementation. It contains an express application and
@@ -90,24 +90,50 @@ class Monitor {
    * The interval at which the monitor pings the instances. If the last update
    * time was longer than this interval, the instance is considered dead.
    */
-  static k_HEARTBEAT_INTERVAL = 5000;
+  private static K_HEARTBEAT_INTERVAL = 5000;
 
   /**
    * The web server
    */
-  server: express.Application;
+  private server: express.Application;
 
   /**
    * The current state of the nodes
    */
-  nodesStatus: IMonitoredNodeStatus[];
+  private nodesStatus: IMonitoredNodeStatus[];
 
   /**
    * The timer used to ping nodes
    */
-  timer: NodeJS.Timer;
+  private timer: NodeJS.Timer;
 
-  private validateNetVersionResponse(data: any) : INetVersionResponse | undefined {
+  /**
+   * Construct a monitor for the given nodes, open an HTTP server on the given
+   * port for incoming requests.
+   */
+  constructor(nodes: IMonitoredNodeConfig[]) {
+    this.server = express();
+    this.setupRouting();
+
+    this.nodesStatus = [];
+    for (const node of nodes) {
+      this.nodesStatus.push(this.configToInitialNodeStatus(node));
+    }
+
+    this.timer = this.createPingTimer();
+    // Ping once immediately on creation to avoid having stale states for the
+    // first few seconds.
+    this.ping();
+  }
+
+  /**
+   * Start the embedded HTTP server to process requests on the given port.
+   */
+  public start(port: number) {
+    this.server.listen(port);
+  }
+
+  private validateNetVersionResponse(data: any): INetVersionResponse | undefined {
     if (!data.hasOwnProperty('id')) {
       return undefined;
     }
@@ -120,15 +146,15 @@ class Monitor {
       return undefined;
     }
 
-    return <INetVersionResponse>data;
+    return data as INetVersionResponse;
   }
 
-  private configToInitialNodeStatus(config: IMonitoredNodeConfig) : IMonitoredNodeStatus {
-    var result : IMonitoredNodeStatus = {
+  private configToInitialNodeStatus(config: IMonitoredNodeConfig): IMonitoredNodeStatus {
+    const result: IMonitoredNodeStatus = {
       address: config.address,
       alive: false,
       lastUpdate: new Date(),
-      lastResponseId: 0
+      lastResponseId: 0,
     };
 
     if (typeof config.reviveCmd !== 'undefined') {
@@ -151,7 +177,7 @@ class Monitor {
     // Parse all request body as JSON, ignoring content-type, for the /add
     // route.
     this.server.use('/add', bodyParser.json({
-      type: '*/*'
+      type: '*/*',
     }));
 
     // POST /add adds the provided instances to the monitored list. The POST
@@ -173,7 +199,7 @@ class Monitor {
         return;
       }
 
-      for (let data of req.body.nodes) {
+      for (const data of req.body.nodes) {
         const monitoredNodeConfig = validateMonitoredNodeConfig(data);
 
         if (typeof monitoredNodeConfig === 'undefined') {
@@ -194,37 +220,37 @@ class Monitor {
       return;
     }
 
-    var args : string[] = [];
+    const args: string[] = [];
     if (typeof node.reviveArgs !== 'undefined') {
       args = node.reviveArgs;
     }
 
     const child = ChildProcess.spawn(node.reviveCmd, args, {
       detached: true,
-      stdio: 'ignore'
+      stdio: 'ignore',
     });
 
     child.unref();
   }
 
   private ping() {
-    for (let node of this.nodesStatus) {
+    for (const node of this.nodesStatus) {
       // https://github.com/ethereum/wiki/wiki/JSON-RPC#net_version
       // We use this simple API as a PING to the network.
       request
         .post(`http://${node.address}`, {
           headers: {
-            'content-type': 'application/json'
+            'content-type': 'application/json',
           },
           json: {
-            jsonrpc: "2.0",
-            method: "net_version",
+            jsonrpc: '2.0',
+            method: 'net_version',
             params: [],
             // We should ignore any response whose id is smaller than the last
             // response id to linearize the communication between the monitor
             // and the network nodes.
-            id: node.lastResponseId + 1
-          }
+            id: node.lastResponseId + 1,
+          },
         }, (err, resp, body) => {
           if (err) {
             winston.error(`Failed to contact node at ${node.address}, reason: ${err}`);
@@ -249,56 +275,31 @@ class Monitor {
     }
   }
 
-  private createPingTimer() : NodeJS.Timer {
+  private createPingTimer(): NodeJS.Timer {
     return setInterval(() => {
       this.ping();
     }, Monitor.k_HEARTBEAT_INTERVAL);
   }
 
-  /**
-   * Construct a monitor for the given nodes, open an HTTP server on the given
-   * port for incoming requests.
-   */
-  constructor(nodes: IMonitoredNodeConfig[]) {
-    this.server = express();
-    this.setupRouting();
-
-    this.nodesStatus = [];
-    for (let node of nodes) {
-      this.nodesStatus.push(this.configToInitialNodeStatus(node));
-    }
-
-    this.timer = this.createPingTimer();
-    // Ping once immediately on creation to avoid having stale states for the
-    // first few seconds.
-    this.ping();
-  }
-
-  /**
-   * Start the embedded HTTP server to process requests on the given port.
-   */
-  public start(port: number) {
-    this.server.listen(port);
-  }
-};
+}
 
 /**
  * Read the configuration file asynchronously and return the result.
  */
-async function parseConfigs(path: string) : Promise<IMonitoredNodeConfig[]> {
+async function parseConfigs(path: string): Promise<IMonitoredNodeConfig[]> {
   const result = new Promise<IMonitoredNodeConfig[]>((resolve, reject) => {
-    var configs : IMonitoredNodeConfig[] = [];
+    const configs: IMonitoredNodeConfig[] = [];
 
     const readStream = fs.createReadStream(path);
-    readStream.on('error', (err) => {
+    readStream.on('error', err => {
       reject(`Failed to read configuration: ${err}`);
     });
 
     const lineReader = readline.createInterface({
-      input: readStream
+      input: readStream,
     });
 
-    lineReader.on('line', (line) => {
+    lineReader.on('line', line => {
       winston.verbose(line);
       try {
         const data = JSON.parse(line);
@@ -320,19 +321,19 @@ async function parseConfigs(path: string) : Promise<IMonitoredNodeConfig[]> {
   });
 
   return result;
-};
+}
 
 program
   .usage('<port> <configpath> <logpath>')
   .action(async (port: string, configPath: string, logPath: string) => {
     winston.add(winston.transports.File, {
-      filename: logPath
+      filename: logPath,
     });
     winston.remove(winston.transports.Console);
 
     winston.info(`Using configuration at: ${configPath}`);
 
-    const portNum = parseInt(port);
+    const portNum = parseInt(port, 10);
 
     if (isNaN(portNum)) {
       winston.error('Please pass a number for the port argument');
