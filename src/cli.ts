@@ -29,9 +29,9 @@ program
   });
 
 program
-  .command('reset')
-  .description('Reset a blockchain completely, removing all its data')
-  .action(() => {
+  .command('clean [env]')
+  .description('Clean a project or an environment, restoring it to init state')
+  .action(env => {
     Geth.cleanup(ETHEREUM_DATADIR);
     console.log('Cleaned up');
   });

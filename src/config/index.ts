@@ -58,10 +58,10 @@ export default class Config {
    *     config file when double.yaml doesn't exist in the current folder.
    * @returns {IEnvConfig} The project configuration for an environment.
    */
-  public static getForEnv(env: string, nocascade?: boolean): IEnvConfig | null {
+  public static getForEnv(env: string, nocascade?: boolean): IEnvConfig {
     const cfg = Config.get(nocascade);
     if (!cfg.envs[env]) {
-      return null;
+      throw new Error(`Unable to find ${env} environment`);
     }
 
     const envcfg = _.cloneDeep(cfg.envs[env]);
