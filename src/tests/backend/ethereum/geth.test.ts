@@ -1,11 +1,14 @@
+import * as path from 'path';
+
 import test from 'ava';
 
 import Geth from '../../../backend/ethereum/geth';
 
 test('init script should contain correct flags', t => {
+  const genesis = `datadir${path.sep}genesis.json`;
   t.deepEqual(Geth.initScript('datadir'), {
     command: 'geth',
-    options: ['--datadir', 'datadir', 'init', 'datadir/genesis.json'],
+    options: ['--datadir', 'datadir', 'init', genesis],
   });
 });
 
