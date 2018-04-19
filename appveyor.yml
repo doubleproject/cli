@@ -1,0 +1,15 @@
+environment:
+  matrix:
+    - nodejs_version: "6"
+    - nodejs_version: "8"
+    - nodejs_version: "9"
+
+install:
+  - ps: Install-Product node $env:nodejs_version
+  - npm config set loglevel warn
+  - npm install --silent
+
+test_script:
+  - node --version
+  - npm --version
+  - npm test
