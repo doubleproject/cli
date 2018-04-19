@@ -14,6 +14,9 @@ import * as winston from 'winston';
 
 import * as ChildProcess from 'child_process';
 import * as fs from 'fs';
+import * as http from 'http';
+
+const enableDestroy = require('server-destroy');
 
 interface IMonitoredNodeConfig {
   /**
@@ -62,7 +65,7 @@ function validateMonitoredNodeConfig(data: any): IMonitoredNodeConfig | undefine
  * An internal interface representing the state we keep track of for each
  * network node.
  */
-interface IMonitoredNodeStatus {
+export interface IMonitoredNodeStatus {
   address: string;
   alive: boolean;
   lastUpdate: Date;
@@ -85,7 +88,7 @@ interface INetVersionResponse {
  * The actual monitor implementation. It contains an express application and
  * last known node status.
  */
-class Monitor {
+export class Monitor {
   /**
    * The interval at which the monitor pings the instances. If the last update
    * time was longer than this interval, the instance is considered dead.
@@ -93,9 +96,14 @@ class Monitor {
   private static K_HEARTBEAT_INTERVAL = 5000;
 
   /**
-   * The web server
+   * The express app
    */
-  private server: express.Application;
+  private app: express.Application;
+
+  /**
+   * The http server
+   */
+  private server?: http.Server;
 
   /**
    * The current state of the nodes
@@ -105,32 +113,48 @@ class Monitor {
   /**
    * The timer used to ping nodes
    */
-  private timer: NodeJS.Timer;
+  private timer?: NodeJS.Timer;
 
   /**
    * Construct a monitor for the given nodes, open an HTTP server on the given
    * port for incoming requests.
    */
   constructor(nodes: IMonitoredNodeConfig[]) {
-    this.server = express();
+    this.app = express();
     this.setupRouting();
+    this.server = undefined;
+    this.timer = undefined;
 
     this.nodesStatus = [];
     for (const node of nodes) {
       this.nodesStatus.push(this.configToInitialNodeStatus(node));
     }
-
-    this.timer = this.createPingTimer();
-    // Ping once immediately on creation to avoid having stale states for the
-    // first few seconds.
-    this.ping();
   }
 
   /**
    * Start the embedded HTTP server to process requests on the given port.
    */
   public start(port: number) {
-    this.server.listen(port);
+    this.timer = this.createPingTimer();
+    this.ping();
+
+    this.server =
+      enableDestroy(this.app.listen(port));
+  }
+
+  /**
+   * Stop the HTTP server.
+   */
+  public stop() {
+    if (typeof this.timer !== 'undefined') {
+      clearInterval(this.timer);
+      this.timer = undefined;
+    }
+
+    if (typeof this.server !== 'undefined') {
+      this.server.destroy();
+      this.server = undefined;
+    }
   }
 
   private validateNetVersionResponse(data: any): INetVersionResponse | undefined {
@@ -170,13 +194,13 @@ class Monitor {
 
   private setupRouting() {
     // GET /status returns the current status of all known instances.
-    this.server.get('/status', (req, res) => {
+    this.app.get('/status', (req, res) => {
       res.send(this.nodesStatus);
     });
 
     // Parse all request body as JSON, ignoring content-type, for the /add
     // route.
-    this.server.use('/add', bodyParser.json({
+    this.app.use('/add', bodyParser.json({
       type: '*/*',
     }));
 
@@ -185,17 +209,17 @@ class Monitor {
     // {
     //   nodes: [IMonitoredNodeConfig...]
     // }
-    this.server.post('/add', (req, res) => {
+    this.app.post('/add', (req, res) => {
 
       winston.info(req.body);
 
       if (!req.body.hasOwnProperty('nodes')) {
-        res.status(404).send('There is no field named nodes.');
+        res.status(400).send('There is no field named nodes.');
         return;
       }
 
       if (!(req.body.nodes instanceof Array)) {
-        res.status(404).send('The field nodes is not an array.');
+        res.status(400).send('The field nodes is not an array.');
         return;
       }
 
@@ -203,7 +227,7 @@ class Monitor {
         const monitoredNodeConfig = validateMonitoredNodeConfig(data);
 
         if (typeof monitoredNodeConfig === 'undefined') {
-          res.status(404).send(`${JSON.stringify(data)} is not a valid configuration.`);
+          res.status(400).send(`${JSON.stringify(data)} is not a valid configuration.`);
           return;
         }
 
@@ -220,7 +244,7 @@ class Monitor {
       return;
     }
 
-    const args: string[] = [];
+    let args: string[] = [];
     if (typeof node.reviveArgs !== 'undefined') {
       args = node.reviveArgs;
     }
@@ -278,7 +302,7 @@ class Monitor {
   private createPingTimer(): NodeJS.Timer {
     return setInterval(() => {
       this.ping();
-    }, Monitor.k_HEARTBEAT_INTERVAL);
+    }, Monitor.K_HEARTBEAT_INTERVAL);
   }
 
 }
@@ -323,36 +347,38 @@ async function parseConfigs(path: string): Promise<IMonitoredNodeConfig[]> {
   return result;
 }
 
-program
-  .usage('<port> <configpath> <logpath>')
-  .action(async (port: string, configPath: string, logPath: string) => {
-    winston.add(winston.transports.File, {
-      filename: logPath,
+if (require.main === module) {
+  program
+    .usage('<port> <configpath> <logpath>')
+    .action(async (port: string, configPath: string, logPath: string) => {
+      winston.add(winston.transports.File, {
+        filename: logPath,
+      });
+      winston.remove(winston.transports.Console);
+
+      winston.info(`Using configuration at: ${configPath}`);
+
+      const portNum = parseInt(port, 10);
+
+      if (isNaN(portNum)) {
+        winston.error('Please pass a number for the port argument');
+      }
+
+      try {
+        const configs = await parseConfigs(configPath);
+        winston.info(JSON.stringify(configs));
+        const monitor = new Monitor(configs);
+        monitor.start(portNum);
+      } catch (err) {
+        winston.error(err);
+        process.exit(1);
+      }
     });
-    winston.remove(winston.transports.Console);
 
-    winston.info(`Using configuration at: ${configPath}`);
+  program.parse(process.argv);
 
-    const portNum = parseInt(port, 10);
-
-    if (isNaN(portNum)) {
-      winston.error('Please pass a number for the port argument');
-    }
-
-    try {
-      const configs = await parseConfigs(configPath);
-      winston.info(JSON.stringify(configs));
-      const monitor = new Monitor(configs);
-      monitor.start(portNum);
-    } catch (err) {
-      winston.error(err);
-      process.exit(1);
-    }
-  });
-
-program.parse(process.argv);
-
-if (program.args.length < 4) {
-  program.help();
-  process.exit(1);
+  if (program.args.length < 4) {
+    program.help();
+    process.exit(1);
+  }
 }
