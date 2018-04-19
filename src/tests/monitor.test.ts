@@ -15,7 +15,7 @@ type TestContext = {
   server1Port: number,
   server2Port: number,
   monitorPort: number,
-}
+};
 
 test.beforeEach('Starting servers...', async t => {
   const mockServer1 = new MockGeth('999');
@@ -42,8 +42,8 @@ test.beforeEach('Starting servers...', async t => {
   t.context = {
     server1: mockServer1,
     server2: mockServer2,
-    monitor: monitor,
-    config: config,
+    monitor,
+    config,
   };
 
   const context = t.context as TestContext;
@@ -79,10 +79,10 @@ test.afterEach.always('Shutting down servers...', async t => {
   });
 });
 
-test('Monitor should report alive for both servers', async t => {
+test.serial('Monitor should report alive for both servers', async t => {
   const context = t.context as TestContext;
 
-  return new Promise<void>((resolve) => {
+  return new Promise<void>(resolve => {
     request
       .get({
         url: `http://localhost:${context.monitorPort}/status`,
@@ -100,8 +100,8 @@ test('Monitor should report alive for both servers', async t => {
   });
 });
 
-test('Monitor should report dead for dead servers', async t => {
-  return new Promise<void>((resolve) => {
+test.serial('Monitor should report dead for dead servers', async t => {
+  return new Promise<void>(resolve => {
     const context = t.context as TestContext;
 
     console.log(`Server1 running on port: ${context.server1Port}`);

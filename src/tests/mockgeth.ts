@@ -1,9 +1,7 @@
-import * as bodyParser from 'body-parser';
-import * as express from 'express';
-
 import * as http from 'http';
 
-const enableDestroy = require('server-destroy');
+import * as bodyParser from 'body-parser';
+import * as express from 'express';
 
 export class MockGeth {
   /**
@@ -32,8 +30,8 @@ export class MockGeth {
    * Start the mock server
    */
   public start(port: number) {
-    this.server =
-      enableDestroy(this.app.listen(port));
+    this.server = http.createServer(this.app);
+    this.server.listen(port);
   }
 
   /**
@@ -41,7 +39,7 @@ export class MockGeth {
    */
   public stop() {
     if (typeof(this.server) !== 'undefined') {
-      this.server.destroy();
+      this.server.close();
       this.server = undefined;
     }
   }
