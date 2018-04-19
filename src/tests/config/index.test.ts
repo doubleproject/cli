@@ -19,7 +19,7 @@ test.serial('init project config should fail with existing double.yaml', t => {
   });
 });
 
-test.serial('should be able to load initialized project config', t => {
+test('should be able to load initialized project config', t => {
   const cfg = Config.init('double-test');
 
   t.is(cfg.project, 'double-test');

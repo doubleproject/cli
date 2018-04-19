@@ -1,14 +1,14 @@
 import Config from '../config';
 
 export function cli(env: string | undefined) {
-
+  env ? cleanEnv(env) : cleanProject();
 }
 
 /**
  * Cleans the current project.
  */
 function cleanProject() {
-
+  console.log('project');
 }
 
 /**
@@ -21,4 +21,7 @@ function cleanProject() {
  */
 function cleanEnv(env: string) {
   const cfg = Config.getForEnv(env, true);
+  if (cfg.chain === 'ethereum') {
+    return;
+  }
 }
