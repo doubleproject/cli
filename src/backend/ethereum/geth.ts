@@ -45,7 +45,7 @@ export default class Geth {
     return {command: 'geth', options: ['--datadir', datadir, 'init', genesis]};
   }
 
-  public static cleanup(datadir: string, callback?: (error: Error) => void) {
+  public static clean(datadir: string, callback?: (error: Error) => void) {
     const dir = path.join(datadir, 'geth');
     callback ? fs.remove(dir, callback) : fs.removeSync(dir);
   }

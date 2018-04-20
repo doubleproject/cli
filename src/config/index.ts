@@ -42,11 +42,7 @@ export default class Config {
       return Config.parseFromFile(ETHEREUM_DEFAULT_CFG);
     }
 
-    try {
-      return Config.parseFromFile('double.yaml');
-    } catch {
-      throw new Error('Invalid double.yaml');
-    }
+    return Config.parseFromFile('double.yaml');
   }
 
   /**

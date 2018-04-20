@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs-extra';
 
 import { ETHEREUM_PROJECT_GENESIS } from '../../data';
+import Geth from './geth';
 
 /**
  * Creates a genesis.json file.
@@ -16,4 +17,21 @@ export function createGenesis(folder: string) {
   }
   fs.ensureDirSync(folder);
   fs.copySync(ETHEREUM_PROJECT_GENESIS, file);
+}
+
+/**
+ * Cleans a data directory.
+ *
+ * Blocks (transactions) are wiped, but keys and genesis.json file are kept.
+ * As such, this is currently only applicable to local environments.
+ *
+ * @param {string} datadir - The root data directory of the environment.
+ * @param {string} backend - The backend used.
+ */
+export function clean(datadir: string, backend: string) {
+  if (backend === 'geth') {
+    Geth.clean(datadir);
+  }
+
+  throw new Error(`Unsupported Ethereum backend ${backend}`);
 }
