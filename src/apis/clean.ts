@@ -2,14 +2,10 @@ import * as inquirer from 'inquirer';
 
 import { clean as cleanETH } from '../backend/ethereum';
 import Config from '../config';
-import { error, info } from '../lib/utils/shell';
+import { info } from '../lib/utils/shell';
 
 export function cli(env?: string) {
-  try {
-    env ? cleanEnv(env) : cleanProject(true);
-  } catch (e) {
-    error(e.message);
-  }
+  env ? cleanEnv(env) : cleanProject(true);
 }
 
 /**
@@ -55,6 +51,10 @@ function cleanProject(confirm?: boolean) {
  */
 function cleanEnv(env: string) {
   const cfg = Config.getForEnv(env);
+  if (!cfg.local) {
+    return;
+  }
+
   if (cfg.chain === 'ethereum') {
     cleanETH(cfg.datadir, cfg.backend!);
     info(`Environment cleaned: ${env}`);

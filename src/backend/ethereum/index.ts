@@ -31,7 +31,7 @@ export function createGenesis(folder: string) {
 export function clean(datadir: string, backend: string) {
   if (backend === 'geth') {
     Geth.clean(datadir);
+  } else {
+    throw new Error(`Unsupported Ethereum backend ${backend}`);
   }
-
-  throw new Error(`Unsupported Ethereum backend ${backend}`);
 }
