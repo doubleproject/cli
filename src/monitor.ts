@@ -6,7 +6,7 @@
  */
 
 import * as ChildProcess from 'child_process';
-import * as fs from 'fs';
+import * as fs from 'fs-extra';
 import * as http from 'http';
 
 import * as bodyParser from 'body-parser';
@@ -101,6 +101,11 @@ export class Monitor {
   private failureTolerance: number;
 
   /**
+   * Path to the configuration file.
+   */
+  private configPath: string;
+
+  /**
    * The express app
    */
   private app: express.Application;
@@ -124,11 +129,13 @@ export class Monitor {
    * Construct a monitor for the given nodes, open an HTTP server on the given
    * port for incoming requests.
    * @param nodes The configurations for each monitored node
+   * @param configPath The path to the configuration file
    * @param heartBeatInterval Number of milliseconds between each ping request
    * @param failureTolerance Number of failures monitor should tolerate before
    * considering a node dead, and trying to revive it
    */
   constructor(nodes: IMonitoredNodeConfig[],
+              configPath: string,
               heartBeatInterval?: number,
               failureTolerance?: number) {
     this.app = express();
@@ -137,6 +144,12 @@ export class Monitor {
     this.timer = undefined;
 
     this.nodesStatus = [];
+
+    // Why do we pass both config data and config path in? Because the
+    // constructor cannot be asynchronous... And since parsing the configuration
+    // can potentially block, we don't want to parse that data synchronously
+    // either. This is a compromise.
+    this.configPath = configPath;
     for (const node of nodes) {
       this.nodesStatus.push(this.configToInitialNodeStatus(node));
     }
@@ -220,6 +233,20 @@ export class Monitor {
     return result;
   }
 
+  /**
+   * Append the configurations to the configuration jsonline file.
+   */
+  private appendConfigData(nodes: IMonitoredNodeConfig[]) {
+    const file = fs.createWriteStream(this.configPath);
+
+    nodes.forEach(node => {
+      const configLine = JSON.stringify(node);
+      file.write(configLine + '\n');
+    });
+
+    file.end();
+  }
+
   private setupRouting() {
     // GET /status returns the current status of all known instances.
     this.app.get('/status', (req, res) => {
@@ -251,6 +278,7 @@ export class Monitor {
         return;
       }
 
+      const validConfigs = [];
       for (const data of req.body.nodes) {
         const monitoredNodeConfig = validateMonitoredNodeConfig(data);
 
@@ -260,8 +288,10 @@ export class Monitor {
         }
 
         this.nodesStatus.push(this.configToInitialNodeStatus(monitoredNodeConfig));
+        validConfigs.push(monitoredNodeConfig);
       }
 
+      this.appendConfigData(validConfigs);
       res.status(200).send('Ok');
     });
   }
@@ -401,7 +431,7 @@ if (require.main === module) {
       try {
         const configs = await parseConfigs(configPath);
         winston.info(JSON.stringify(configs));
-        const monitor = new Monitor(configs);
+        const monitor = new Monitor(configs, configPath);
         monitor.start(portNum);
       } catch (err) {
         winston.error(err);

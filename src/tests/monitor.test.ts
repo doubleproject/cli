@@ -40,7 +40,7 @@ test.beforeEach('Starting servers...', async t => {
       reviveArgs: 'server2',
     },
   ];
-  const monitor = new Monitor(config, K_HEARTBEAT_INTERVAL, K_FAILURE_TOLERANCE);
+  const monitor = new Monitor(config, 'testconfig.jl', K_HEARTBEAT_INTERVAL, K_FAILURE_TOLERANCE);
 
   t.context = {
     server1: mockServer1,
@@ -83,6 +83,10 @@ test.afterEach.always('Shutting down servers...', async t => {
       resolve();
     }, 1000);
   });
+});
+
+test.after.always('Removing test files...', async t => {
+  rimraf.sync('testconfig.jl');
 });
 
 test.serial('Monitor should report alive for both servers', async t => {
