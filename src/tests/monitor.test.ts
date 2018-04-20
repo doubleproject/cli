@@ -8,7 +8,7 @@ import { MockGeth } from './mockgeth';
 
 let port = 8080;
 const K_HEARTBEAT_INTERVAL = 1000;
-const K_FAILURE_TOLERANCE = 3;
+const K_FAILURE_TOLERANCE = 5;
 
 interface ITestContext {
   server1: MockGeth;

@@ -37,23 +37,23 @@ interface IMonitoredNodeConfig {
 /**
  * Takes any object and checks if it conforms to the config interface.
  */
-function validateMonitoredNodeConfig(data: any): IMonitoredNodeConfig | undefined {
+function validateMonitoredNodeConfig(data: any): IMonitoredNodeConfig {
   if (!data.hasOwnProperty('address')) {
-    return undefined;
+    throw new Error('config does not have address field');
   }
 
   if (typeof(data.address) !== 'string') {
-    return undefined;
+    throw new Error('address is not a string');
   }
 
   if (data.hasOwnProperty('reviveCmd') &&
       typeof(data.reviveCmd) !== 'string') {
-    return undefined;
+    throw new Error('invalid reviveCmd field');
   }
 
   if (data.hasOwnProperty('reviveArgs') &&
       typeof(data.reviveArgs) !== 'string') {
-    return undefined;
+    throw new Error('invalid reviveArgs field');
   }
 
   return data;
@@ -92,7 +92,7 @@ export class Monitor {
    * The interval at which the monitor pings the instances. If the last update
    * time was longer than this interval, the instance is considered dead.
    */
-  private heartBeatInterval: number;
+  private heartbeatInterval: number;
 
   /**
    * Number of failures the monitor should tolerate before considering a node as
@@ -100,29 +100,19 @@ export class Monitor {
    */
   private failureTolerance: number;
 
-  /**
-   * Path to the configuration file.
-   */
+  // Path to the configuration file.
   private configPath: string;
 
-  /**
-   * The express app
-   */
+  // The express app
   private app: express.Application;
 
-  /**
-   * The http server
-   */
+  // The http server
   private server?: http.Server;
 
-  /**
-   * The current state of the nodes
-   */
+  // The current state of the nodes
   private nodesStatus: IMonitoredNodeStatus[];
 
-  /**
-   * The timer used to ping nodes
-   */
+  // The timer used to ping nodes
   private timer?: NodeJS.Timer;
 
   /**
@@ -130,13 +120,13 @@ export class Monitor {
    * port for incoming requests.
    * @param nodes The configurations for each monitored node
    * @param configPath The path to the configuration file
-   * @param heartBeatInterval Number of milliseconds between each ping request
+   * @param heartbeatInterval Number of milliseconds between each ping request
    * @param failureTolerance Number of failures monitor should tolerate before
    * considering a node dead, and trying to revive it
    */
   constructor(nodes: IMonitoredNodeConfig[],
               configPath: string,
-              heartBeatInterval?: number,
+              heartbeatInterval?: number,
               failureTolerance?: number) {
     this.app = express();
     this.setupRouting();
@@ -154,10 +144,10 @@ export class Monitor {
       this.nodesStatus.push(this.configToInitialNodeStatus(node));
     }
 
-    if (typeof heartBeatInterval !== 'undefined') {
-      this.heartBeatInterval = heartBeatInterval;
+    if (typeof heartbeatInterval !== 'undefined') {
+      this.heartbeatInterval = heartbeatInterval;
     } else {
-      this.heartBeatInterval = 5000;
+      this.heartbeatInterval = 5000;
     }
 
     if (typeof failureTolerance !== 'undefined') {
@@ -193,17 +183,17 @@ export class Monitor {
     }
   }
 
-  private validateNetVersionResponse(data: any): INetVersionResponse | undefined {
+  private validateNetVersionResponse(data: any): INetVersionResponse {
     if (!data.hasOwnProperty('id')) {
-      return undefined;
+      throw new Error('response does not contain id field');
     }
 
     if (typeof data.id !== 'number') {
-      return undefined;
+      throw new Error('id is not a number');
     }
 
     if (!data.hasOwnProperty('result')) {
-      return undefined;
+      throw new Error('response does not contain result field');
     }
 
     return data as INetVersionResponse;
@@ -279,20 +269,17 @@ export class Monitor {
       }
 
       const validConfigs = [];
-      for (const data of req.body.nodes) {
-        const monitoredNodeConfig = validateMonitoredNodeConfig(data);
-
-        if (typeof monitoredNodeConfig === 'undefined') {
-          res.status(400).send(`${JSON.stringify(data)} is not a valid configuration.`);
-          return;
+      try {
+        for (const data of req.body.nodes) {
+          const monitoredNodeConfig = validateMonitoredNodeConfig(data);
+          this.nodesStatus.push(this.configToInitialNodeStatus(monitoredNodeConfig));
+          validConfigs.push(monitoredNodeConfig);
+          this.appendConfigData(validConfigs);
+          res.status(200).send('Ok');
         }
-
-        this.nodesStatus.push(this.configToInitialNodeStatus(monitoredNodeConfig));
-        validConfigs.push(monitoredNodeConfig);
+      } catch (err) {
+        res.status(400).send(`${req.body} contains invalid configuration, error: ${err}`);
       }
-
-      this.appendConfigData(validConfigs);
-      res.status(200).send('Ok');
     });
   }
 
@@ -342,12 +329,7 @@ export class Monitor {
         });
 
         const nodeResp = this.validateNetVersionResponse(body);
-        if (typeof nodeResp === 'undefined') {
-          winston.info(`Node ${node.address} returned invalid response: ${body}`);
-          node.alive = false;
-          node.failureCount++;
-          this.tryRevive(node);
-        } else if (nodeResp.id > node.lastResponseId) {
+        if (nodeResp.id > node.lastResponseId) {
           // Ignore stale responses by checking the request/response id
           node.alive = true;
           node.networkId = nodeResp.result;
@@ -366,7 +348,7 @@ export class Monitor {
   private createPingTimer(): NodeJS.Timer {
     return setInterval(() => {
       this.ping();
-    }, this.heartBeatInterval);
+    }, this.heartbeatInterval);
   }
 
 }
@@ -392,12 +374,7 @@ async function parseConfigs(path: string): Promise<IMonitoredNodeConfig[]> {
       try {
         const data = JSON.parse(line);
         const config = validateMonitoredNodeConfig(data);
-
-        if (typeof config !== 'undefined') {
-          configs.push(config);
-        } else {
-          reject(`Invalid configuration data: ${line}`);
-        }
+        configs.push(config);
       } catch (err) {
         reject(`Failed to parse configuration data: ${err}`);
       }
