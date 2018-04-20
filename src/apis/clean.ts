@@ -1,6 +1,8 @@
+import * as inquirer from 'inquirer';
+
 import { clean as cleanETH } from '../backend/ethereum';
 import Config from '../config';
-import { error } from '../lib/utils/shell';
+import { error, info } from '../lib/utils/shell';
 
 export function cli(env?: string) {
   try {
@@ -18,7 +20,29 @@ export function cli(env?: string) {
  * @param {boolean} confirm - If true, ask use to confirm cleaning.
  */
 function cleanProject(confirm?: boolean) {
-  console.log('project');
+  const cfg = Config.get();
+
+  if (confirm) {
+    info(`Cleaning ${cfg.project} project...`);
+    info('This will remove all blocks from all local environments. ' +
+      'To clean a specific environment, use `double clean [env]`.\n');
+    const questions = [{
+      type: 'confirm',
+      name: 'confirm',
+      message: 'Do you want to clean the entire project?',
+    }];
+    inquirer.prompt(questions).then((answers: any) => {
+      if (!answers.confirm) {
+        return;
+      }
+    });
+  }
+
+  for (const name in cfg.envs) {
+    if (cfg.envs.hasOwnProperty(name)) {
+      cleanEnv(name);
+    }
+  }
 }
 
 /**
@@ -30,10 +54,11 @@ function cleanProject(confirm?: boolean) {
  * @param {string} env - The environment to clean.
  */
 function cleanEnv(env: string) {
-  const cfg = Config.getForEnv(env, true);
+  const cfg = Config.getForEnv(env);
   if (cfg.chain === 'ethereum') {
     cleanETH(cfg.datadir, cfg.backend!);
+    info(`Environment cleaned: ${env}`);
+  } else {
+    throw new Error(`Environment not found: ${env}`);
   }
-
-  throw new Error(`Invalid environment ${env}`);
 }
