@@ -5,18 +5,16 @@
  * monitor process may modify the file and add more objects to it.
  */
 
-import * as bodyParser from 'body-parser';
-import * as program from 'commander';
-import * as express from 'express';
-import * as readline from 'readline';
-import * as request from 'request';
-import * as winston from 'winston';
-
 import * as ChildProcess from 'child_process';
 import * as fs from 'fs';
 import * as http from 'http';
 
-const enableDestroy = require('server-destroy');
+import * as bodyParser from 'body-parser';
+import * as program from 'commander';
+import * as express from 'express';
+import * as readline from 'readline';
+import * as rp from 'request-promise';
+import * as winston from 'winston';
 
 interface IMonitoredNodeConfig {
   /**
@@ -70,6 +68,7 @@ export interface IMonitoredNodeStatus {
   alive: boolean;
   lastUpdate: Date;
   lastResponseId: number;
+  failureCount: number;
   networkId?: string;
   reviveCmd?: string;
   reviveArgs?: string[];
@@ -93,7 +92,13 @@ export class Monitor {
    * The interval at which the monitor pings the instances. If the last update
    * time was longer than this interval, the instance is considered dead.
    */
-  private static K_HEARTBEAT_INTERVAL = 5000;
+  private heartBeatInterval: number;
+
+  /**
+   * Number of failures the monitor should tolerate before considering a node as
+   * dead.
+   */
+  private failureTolerance: number;
 
   /**
    * The express app
@@ -118,8 +123,14 @@ export class Monitor {
   /**
    * Construct a monitor for the given nodes, open an HTTP server on the given
    * port for incoming requests.
+   * @param nodes The configurations for each monitored node
+   * @param heartBeatInterval Number of milliseconds between each ping request
+   * @param failureTolerance Number of failures monitor should tolerate before
+   * considering a node dead, and trying to revive it
    */
-  constructor(nodes: IMonitoredNodeConfig[]) {
+  constructor(nodes: IMonitoredNodeConfig[],
+              heartBeatInterval?: number,
+              failureTolerance?: number) {
     this.app = express();
     this.setupRouting();
     this.server = undefined;
@@ -128,6 +139,18 @@ export class Monitor {
     this.nodesStatus = [];
     for (const node of nodes) {
       this.nodesStatus.push(this.configToInitialNodeStatus(node));
+    }
+
+    if (typeof heartBeatInterval !== 'undefined') {
+      this.heartBeatInterval = heartBeatInterval;
+    } else {
+      this.heartBeatInterval = 5000;
+    }
+
+    if (typeof failureTolerance !== 'undefined') {
+      this.failureTolerance = failureTolerance;
+    } else {
+      this.failureTolerance = 1;
     }
   }
 
@@ -138,8 +161,8 @@ export class Monitor {
     this.timer = this.createPingTimer();
     this.ping();
 
-    this.server =
-      enableDestroy(this.app.listen(port));
+    this.server = http.createServer(this.app);
+    this.server.listen(port);
   }
 
   /**
@@ -152,7 +175,7 @@ export class Monitor {
     }
 
     if (typeof this.server !== 'undefined') {
-      this.server.destroy();
+      this.server.close();
       this.server = undefined;
     }
   }
@@ -173,12 +196,17 @@ export class Monitor {
     return data as INetVersionResponse;
   }
 
+  /**
+   * Generates the initial status for a node given a monitored node's
+   * configuration.
+   */
   private configToInitialNodeStatus(config: IMonitoredNodeConfig): IMonitoredNodeStatus {
     const result: IMonitoredNodeStatus = {
       address: config.address,
       alive: false,
       lastUpdate: new Date(),
       lastResponseId: 0,
+      failureCount: 0,
     };
 
     if (typeof config.reviveCmd !== 'undefined') {
@@ -239,6 +267,11 @@ export class Monitor {
   }
 
   private tryRevive(node: IMonitoredNodeStatus) {
+    if (node.failureCount < this.failureTolerance) {
+      winston.info(`${node.address} hasn't reached failure threshold yet, not reviving...`);
+      return;
+    }
+
     if (typeof node.reviveCmd === 'undefined') {
       winston.info(`${node.address} doesn't have a revive command...`);
       return;
@@ -257,12 +290,13 @@ export class Monitor {
     child.unref();
   }
 
-  private ping() {
+  private async ping() {
     for (const node of this.nodesStatus) {
       // https://github.com/ethereum/wiki/wiki/JSON-RPC#net_version
       // We use this simple API as a PING to the network.
-      request
-        .post(`http://${node.address}`, {
+
+      try {
+        const body = await rp.post(`http://${node.address}`, {
           headers: {
             'content-type': 'application/json',
           },
@@ -275,34 +309,34 @@ export class Monitor {
             // and the network nodes.
             id: node.lastResponseId + 1,
           },
-        }, (err, resp, body) => {
-          if (err) {
-            winston.error(`Failed to contact node at ${node.address}, reason: ${err}`);
-            node.alive = false;
-            this.tryRevive(node);
-            return;
-          }
-
-          const nodeResp = this.validateNetVersionResponse(body);
-          if (typeof nodeResp === 'undefined') {
-            winston.info(`Node ${node.address} returned invalid response: ${body}`);
-            node.alive = false;
-            this.tryRevive(node);
-          } else if (nodeResp.id > node.lastResponseId) {
-            // Ignore stale responses by checking the request/response id
-            node.alive = true;
-            node.networkId = nodeResp.result;
-            node.lastUpdate = new Date();
-            node.lastResponseId = nodeResp.id;
-          }
         });
+
+        const nodeResp = this.validateNetVersionResponse(body);
+        if (typeof nodeResp === 'undefined') {
+          winston.info(`Node ${node.address} returned invalid response: ${body}`);
+          node.alive = false;
+          node.failureCount++;
+          this.tryRevive(node);
+        } else if (nodeResp.id > node.lastResponseId) {
+          // Ignore stale responses by checking the request/response id
+          node.alive = true;
+          node.networkId = nodeResp.result;
+          node.lastUpdate = new Date();
+          node.lastResponseId = nodeResp.id;
+        }
+      } catch (err) {
+        winston.error(`Failed to contact node at ${node.address}, reason: ${err}`);
+        node.alive = false;
+        node.failureCount++;
+        this.tryRevive(node);
+      }
     }
   }
 
   private createPingTimer(): NodeJS.Timer {
     return setInterval(() => {
       this.ping();
-    }, Monitor.K_HEARTBEAT_INTERVAL);
+    }, this.heartBeatInterval);
   }
 
 }

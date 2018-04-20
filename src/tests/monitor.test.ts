@@ -1,21 +1,24 @@
-// import * as fs from 'fs';
+import * as fs from 'fs-extra';
 
 import { test } from 'ava';
-import * as request from 'request';
+import * as rp from 'request-promise';
+import * as rimraf from 'rimraf';
 import { IMonitoredNodeStatus, Monitor } from '../monitor';
 import { MockGeth } from './mockgeth';
 
 let port = 8080;
+const K_HEARTBEAT_INTERVAL = 1000;
+const K_FAILURE_TOLERANCE = 3;
 
-type TestContext = {
-  server1: MockGeth,
-  server2: MockGeth,
-  monitor: Monitor,
-  config: IMonitoredNodeStatus[],
-  server1Port: number,
-  server2Port: number,
-  monitorPort: number,
-};
+interface ITestContext {
+  server1: MockGeth;
+  server2: MockGeth;
+  monitor: Monitor;
+  config: IMonitoredNodeStatus[];
+  server1Port: number;
+  server2Port: number;
+  monitorPort: number;
+}
 
 test.beforeEach('Starting servers...', async t => {
   const mockServer1 = new MockGeth('999');
@@ -37,7 +40,7 @@ test.beforeEach('Starting servers...', async t => {
       reviveArgs: 'server2',
     },
   ];
-  const monitor = new Monitor(config);
+  const monitor = new Monitor(config, K_HEARTBEAT_INTERVAL, K_FAILURE_TOLERANCE);
 
   t.context = {
     server1: mockServer1,
@@ -46,7 +49,7 @@ test.beforeEach('Starting servers...', async t => {
     config,
   };
 
-  const context = t.context as TestContext;
+  const context = t.context as ITestContext;
 
   context.server1.start(port1);
   context.server2.start(port2);
@@ -65,11 +68,14 @@ test.beforeEach('Starting servers...', async t => {
 });
 
 test.afterEach.always('Shutting down servers...', async t => {
-  const context = t.context as TestContext;
+  const context = t.context as ITestContext;
 
   context.server1.stop();
   context.server2.stop();
   context.monitor.stop();
+
+  rimraf.sync('server1');
+  rimraf.sync('server2');
 
   // Sleep for 1 second to let the monitor catch up.
   return new Promise<void>((resolve, reject) => {
@@ -80,51 +86,102 @@ test.afterEach.always('Shutting down servers...', async t => {
 });
 
 test.serial('Monitor should report alive for both servers', async t => {
-  const context = t.context as TestContext;
+  const context = t.context as ITestContext;
 
-  return new Promise<void>(resolve => {
-    request
-      .get({
-        url: `http://localhost:${context.monitorPort}/status`,
-        headers: {
-          Connection: 'close',
-        },
-      }, (err, resp, body) => {
-        const status = JSON.parse(body) as IMonitoredNodeStatus[];
-
-        t.is(status[0].alive, true);
-        t.is(status[1].alive, true);
-
-        resolve();
-      });
+  const body = await rp.get({
+    url: `http://localhost:${context.monitorPort}/status`,
+    headers: {
+      Connection: 'close',
+    },
   });
+
+  const status = JSON.parse(body) as IMonitoredNodeStatus[];
+
+  t.is(status[0].alive, true);
+  t.is(status[1].alive, true);
 });
 
 test.serial('Monitor should report dead for dead servers', async t => {
-  return new Promise<void>(resolve => {
-    const context = t.context as TestContext;
+  const context = t.context as ITestContext;
 
-    console.log(`Server1 running on port: ${context.server1Port}`);
-    console.log('Stopping server1...');
-    context.server1.stop();
+  console.log(`Server1 running on port: ${context.server1Port}`);
+  console.log('Stopping server1...');
+  context.server1.stop();
 
-    setTimeout(() => {
-      console.log('Getting another status...');
-      request
-        .get({
-          url: `http://localhost:${context.monitorPort}/status`,
-          headers: {
-            Connection: 'close',
-          }
-        }, (err, resp, body) => {
-          const status = JSON.parse(body) as IMonitoredNodeStatus[];
-
-          console.log(status);
-
-          t.is(status[0].alive, false);
-          t.is(status[1].alive, true);
-          resolve();
-        });
-    }, 6000);
+  await new Promise<void>(resolve => {
+    setTimeout(() => resolve(), K_HEARTBEAT_INTERVAL * (K_FAILURE_TOLERANCE + 1));
   });
+
+  console.log('Getting another status...');
+  const body = await rp.get({
+    url: `http://localhost:${context.monitorPort}/status`,
+  });
+
+  const status = JSON.parse(body) as IMonitoredNodeStatus[];
+
+  t.is(status[0].alive, false);
+  t.is(status[1].alive, true);
+
+  const triedToReviveServer1 = fs.existsSync('server1');
+  const triedToReviveServer2 = fs.existsSync('server2');
+
+  t.is(triedToReviveServer1, true);
+  t.is(triedToReviveServer2, false);
+});
+
+test.serial('Monitor /add request should add a monitored instance', async t => {
+  const context = t.context as ITestContext;
+
+  await rp.post({
+    url: `http://localhost:${context.monitorPort}/add`,
+    json: {
+      nodes: [
+        {
+          address: 'localhost:9000',
+          reviveCmd: 'touch',
+          reviveArgs: 'addedServer',
+        },
+      ],
+    },
+  });
+
+  const body = await rp.get({
+    url: `http://localhost:${context.monitorPort}/status`,
+  });
+
+  const status = JSON.parse(body) as IMonitoredNodeStatus[];
+
+  t.is(status[0].alive, true);
+  t.is(status[1].alive, true);
+  t.is(status[2].alive, false);
+
+  await new Promise<void>(resolve => {
+    setTimeout(() => resolve(), K_HEARTBEAT_INTERVAL * (K_FAILURE_TOLERANCE + 1));
+  });
+
+  const triedToReviveAddedServer = fs.existsSync('addedServer');
+  t.is(triedToReviveAddedServer, true);
+
+  rimraf.sync('addedServer');
+});
+
+test.serial('Monitor should not revive node before reaching failure tolerance', async t => {
+  const context = t.context as ITestContext;
+
+  context.server1.stop();
+
+  await new Promise<void>(resolve => {
+    setTimeout(() => resolve(), K_HEARTBEAT_INTERVAL * (K_FAILURE_TOLERANCE - 2));
+  });
+
+  const body = await rp.get({
+    url: `http://localhost:${context.monitorPort}/status`,
+  });
+
+  const status = JSON.parse(body) as IMonitoredNodeStatus[];
+
+  t.is(status[0].alive, false);
+
+  const triedToReviveServer1 = fs.existsSync('server1');
+  t.is(triedToReviveServer1, false);
 });
