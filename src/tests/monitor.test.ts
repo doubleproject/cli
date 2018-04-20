@@ -40,6 +40,9 @@ test.beforeEach('Starting servers...', async t => {
       reviveArgs: 'server2',
     },
   ];
+
+  fs.ensureFileSync('testconfig.jl');
+
   const monitor = new Monitor(config, 'testconfig.jl', K_HEARTBEAT_INTERVAL, K_FAILURE_TOLERANCE);
 
   t.context = {
@@ -77,16 +80,14 @@ test.afterEach.always('Shutting down servers...', async t => {
   rimraf.sync('server1');
   rimraf.sync('server2');
 
+  rimraf.sync('testconfig.jl');
+
   // Sleep for 1 second to let the monitor catch up.
   return new Promise<void>((resolve, reject) => {
     setTimeout(() => {
       resolve();
     }, 1000);
   });
-});
-
-test.after.always('Removing test files...', async t => {
-  rimraf.sync('testconfig.jl');
 });
 
 test.serial('Monitor should report alive for both servers', async t => {
@@ -165,6 +166,9 @@ test.serial('Monitor /add request should add a monitored instance', async t => {
 
   const triedToReviveAddedServer = fs.existsSync('addedServer');
   t.is(triedToReviveAddedServer, true);
+
+  const configData = await fs.readFile('testconfig.jl');
+  t.is(configData.includes('localhost:9000'), true);
 
   rimraf.sync('addedServer');
 });

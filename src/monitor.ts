@@ -100,24 +100,25 @@ export class Monitor {
    */
   private failureTolerance: number;
 
-  // Path to the configuration file.
+  /** Path to the configuration file. */
   private configPath: string;
 
-  // The express app
+  /** The express app */
   private app: express.Application;
 
-  // The http server
+  /** The http server */
   private server?: http.Server;
 
-  // The current state of the nodes
-  private nodesStatus: IMonitoredNodeStatus[];
+  /** The current state of the nodes */
+  private nodeStatuses: IMonitoredNodeStatus[];
 
-  // The timer used to ping nodes
+  /** The timer used to ping nodes */
   private timer?: NodeJS.Timer;
 
   /**
    * Construct a monitor for the given nodes, open an HTTP server on the given
    * port for incoming requests.
+   *
    * @param nodes The configurations for each monitored node
    * @param configPath The path to the configuration file
    * @param heartbeatInterval Number of milliseconds between each ping request
@@ -133,7 +134,7 @@ export class Monitor {
     this.server = undefined;
     this.timer = undefined;
 
-    this.nodesStatus = [];
+    this.nodeStatuses = [];
 
     // Why do we pass both config data and config path in? Because the
     // constructor cannot be asynchronous... And since parsing the configuration
@@ -141,16 +142,22 @@ export class Monitor {
     // either. This is a compromise.
     this.configPath = configPath;
     for (const node of nodes) {
-      this.nodesStatus.push(this.configToInitialNodeStatus(node));
+      this.nodeStatuses.push(this.configToInitialNodeStatus(node));
     }
 
     if (typeof heartbeatInterval !== 'undefined') {
+      if (heartbeatInterval < 1000) {
+        throw new Error('Heartbeat interval must be at least 1000 milliseconds');
+      }
       this.heartbeatInterval = heartbeatInterval;
     } else {
       this.heartbeatInterval = 5000;
     }
 
     if (typeof failureTolerance !== 'undefined') {
+      if (failureTolerance < 1) {
+        throw new Error('failureTolerance must be at least 1');
+      }
       this.failureTolerance = failureTolerance;
     } else {
       this.failureTolerance = 1;
@@ -227,7 +234,9 @@ export class Monitor {
    * Append the configurations to the configuration jsonline file.
    */
   private appendConfigData(nodes: IMonitoredNodeConfig[]) {
-    const file = fs.createWriteStream(this.configPath);
+    const file = fs.createWriteStream(this.configPath, {
+      flags: 'a',
+    });
 
     nodes.forEach(node => {
       const configLine = JSON.stringify(node);
@@ -240,14 +249,12 @@ export class Monitor {
   private setupRouting() {
     // GET /status returns the current status of all known instances.
     this.app.get('/status', (req, res) => {
-      res.send(this.nodesStatus);
+      res.send(this.nodeStatuses);
     });
 
     // Parse all request body as JSON, ignoring content-type, for the /add
     // route.
-    this.app.use('/add', bodyParser.json({
-      type: '*/*',
-    }));
+    this.app.use('/add', bodyParser.json());
 
     // POST /add adds the provided instances to the monitored list. The POST
     // data must be a JSON object with the following format.
@@ -258,11 +265,6 @@ export class Monitor {
 
       winston.info(req.body);
 
-      if (!req.body.hasOwnProperty('nodes')) {
-        res.status(400).send('There is no field named nodes.');
-        return;
-      }
-
       if (!(req.body.nodes instanceof Array)) {
         res.status(400).send('The field nodes is not an array.');
         return;
@@ -272,7 +274,7 @@ export class Monitor {
       try {
         for (const data of req.body.nodes) {
           const monitoredNodeConfig = validateMonitoredNodeConfig(data);
-          this.nodesStatus.push(this.configToInitialNodeStatus(monitoredNodeConfig));
+          this.nodeStatuses.push(this.configToInitialNodeStatus(monitoredNodeConfig));
           validConfigs.push(monitoredNodeConfig);
           this.appendConfigData(validConfigs);
           res.status(200).send('Ok');
@@ -308,7 +310,7 @@ export class Monitor {
   }
 
   private async ping() {
-    for (const node of this.nodesStatus) {
+    for (const node of this.nodeStatuses) {
       // https://github.com/ethereum/wiki/wiki/JSON-RPC#net_version
       // We use this simple API as a PING to the network.
 
@@ -334,6 +336,7 @@ export class Monitor {
           node.alive = true;
           node.networkId = nodeResp.result;
           node.lastUpdate = new Date();
+          node.failureCount = 0;
           node.lastResponseId = nodeResp.id;
         }
       } catch (err) {
