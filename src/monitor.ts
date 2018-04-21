@@ -38,10 +38,6 @@ interface IMonitoredNodeConfig {
  * Takes any object and checks if it conforms to the config interface.
  */
 function validateMonitoredNodeConfig(data: any): IMonitoredNodeConfig {
-  if (!data.hasOwnProperty('address')) {
-    throw new Error('config does not have address field');
-  }
-
   if (typeof(data.address) !== 'string') {
     throw new Error('address is not a string');
   }
