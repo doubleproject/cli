@@ -22,13 +22,14 @@ export default class Validator {
 
   public validateProjectConfig(config: any): IProjectConfig {
     const cfg = this.validate(config);
-    const envNames = new Set();
+
+    cfg.chain = cfg.chain || 'ethereum';
+    if (cfg.chain === 'ethereum' && !cfg.backend) {
+      cfg.backend = 'geth';
+    }
+
     for (const key in cfg.envs) {
       if (cfg.envs.hasOwnProperty(key)) {
-        if (envNames.has(key)) {
-          throw new Error(`Duplicate env name ${key}`);
-        }
-        envNames.add(key);
         cfg.envs[key] = this.validateEnvConfig(cfg, cfg.envs[key]);
       }
     }
@@ -40,7 +41,7 @@ export default class Validator {
     if (!cfg.chain && root.chain) {
       cfg.chain = root.chain;
     }
-    if (!cfg.backend && root.backend) {
+    if (cfg.local && !cfg.backend && root.backend) {
       cfg.backend = root.backend;
     }
 
@@ -48,8 +49,10 @@ export default class Validator {
       throw new Error(`Invalid chain ${cfg.chain}`);
     }
 
-    if (!cfg.backend || !ALLOWED_BACKENDS.get(cfg.chain)!.has(cfg.backend)) {
-      throw new Error(`Invalid backend ${cfg.backend} for chain ${cfg.chain}`);
+    if (cfg.local) {
+      if (!cfg.backend || !ALLOWED_BACKENDS.get(cfg.chain)!.has(cfg.backend)) {
+        throw new Error(`Invalid backend ${cfg.backend} for ${cfg.chain}`);
+      }
     }
 
     return cfg;
