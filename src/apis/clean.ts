@@ -14,7 +14,7 @@ import { info } from '../lib/utils/shell';
  *     project is cleaned.
  */
 export function cli(env?: string) {
-  env ? cleanEnv(env) : cleanProjectWithConfirm();
+  env ? cleanEnv(env) : cleanProjectWithConfirmation();
 }
 
 /**
@@ -23,7 +23,7 @@ export function cli(env?: string) {
  * This function asks for user confirmation before proceeding. If there is no
  * current project, the default project will be cleaned.
  */
-function cleanProjectWithConfirm() {
+function cleanProjectWithConfirmation() {
   const cfg = Config.get();
   info(`Cleaning ${cfg.project} project...`);
   info('This will remove all blocks from all local environments. ' +
