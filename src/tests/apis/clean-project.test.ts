@@ -25,7 +25,7 @@ test('should be able to clean project', async t => {
   t.true(fs.existsSync('remote/geth/hi.txt'));
 });
 
-test('should be able to stop cleaning project', async t => {
+test.serial('should be able to stop cleaning project', async t => {
   await run(['clean'], ['n']);
   t.true(fs.existsSync('local1/geth/hi.txt'));
   t.true(fs.existsSync('local3/geth/hi.txt'));
