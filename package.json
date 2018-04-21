@@ -6,7 +6,7 @@
     "watch": "tsc -w",
     "build": "tsc",
     "lint": "tslint",
-    "test": "rimraf dist && tsc && tslint -c tslint.json -p tsconfig.json && npm link && nyc ava",
+    "test": "rimraf dist && tsc && tslint -c tslint.json -p tsconfig.json && nyc ava",
     "clean": "rimraf dist",
     "coveralls": "nyc report --reporter=text-lcov | coveralls"
   },

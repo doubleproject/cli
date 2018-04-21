@@ -1,8 +1,10 @@
 import { spawn } from 'child_process';
+import * as path from 'path';
 import { Stream } from 'stream';
 
 export default function(args: string[], combo: string[]) {
-  const proc = spawn('double', args, { stdio: [null, null, null] });
+  args.unshift(path.join(__dirname, '..', '..', 'cli.js'));
+  const proc = spawn('node', args, { stdio: [null, null, null] });
   const loop = (c: string[]) => {
     if (c.length > 0) {
       setTimeout(() => {

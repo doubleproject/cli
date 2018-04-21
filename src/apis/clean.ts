@@ -14,35 +14,34 @@ import { info } from '../lib/utils/shell';
  *     project is cleaned.
  */
 export function cli(env?: string) {
-  env ? cleanEnv(env) : cleanProject(true);
+  env ? cleanEnv(env) : cleanProjectWithConfirm();
 }
 
 /**
  * Cleans all environments of the current project.
  *
- * If there is no current project, the default project will be cleaned.
- *
- * @param {boolean} confirm - If true, ask use to confirm cleaning.
+ * This function asks for user confirmation before proceeding. If there is no
+ * current project, the default project will be cleaned.
  */
-function cleanProject(confirm?: boolean) {
+function cleanProjectWithConfirm() {
   const cfg = Config.get();
+  info(`Cleaning ${cfg.project} project...`);
+  info('This will remove all blocks from all local environments. ' +
+    'To clean a specific environment, use `double clean [env]`.\n');
+  const questions = [{
+    type: 'confirm',
+    name: 'confirm',
+    message: 'Do you want to clean the entire project?',
+  }];
+  inquirer.prompt(questions).then((answers: any) => {
+    if (answers.confirm) {
+      cleanProject();
+    }
+  });
+}
 
-  if (confirm) {
-    info(`Cleaning ${cfg.project} project...`);
-    info('This will remove all blocks from all local environments. ' +
-      'To clean a specific environment, use `double clean [env]`.\n');
-    const questions = [{
-      type: 'confirm',
-      name: 'confirm',
-      message: 'Do you want to clean the entire project?',
-    }];
-    inquirer.prompt(questions).then((answers: any) => {
-      if (!answers.confirm) {
-        return;
-      }
-    });
-  }
-
+function cleanProject() {
+  const cfg = Config.get();
   for (const name in cfg.envs) {
     if (cfg.envs.hasOwnProperty(name)) {
       cleanEnv(name);
