@@ -10,7 +10,6 @@ import * as fs from 'fs-extra';
 import * as http from 'http';
 
 import * as bodyParser from 'body-parser';
-import * as program from 'commander';
 import * as express from 'express';
 import * as readline from 'readline';
 import * as rp from 'request-promise';
@@ -388,37 +387,35 @@ async function parseConfigs(path: string): Promise<IMonitoredNodeConfig[]> {
 }
 
 if (require.main === module) {
-  program
-    .usage('<port> <configpath> <logpath>')
-    .action(async (port: string, configPath: string, logPath: string) => {
-      winston.add(winston.transports.File, {
-        filename: logPath,
-      });
-      winston.remove(winston.transports.Console);
-
-      winston.info(`Using configuration at: ${configPath}`);
-
-      const portNum = parseInt(port, 10);
-
-      if (isNaN(portNum)) {
-        winston.error('Please pass a number for the port argument');
-      }
-
-      try {
-        const configs = await parseConfigs(configPath);
-        winston.info(JSON.stringify(configs));
-        const monitor = new Monitor(configs, configPath);
-        monitor.start(portNum);
-      } catch (err) {
-        winston.error(err);
-        process.exit(1);
-      }
-    });
-
-  program.parse(process.argv);
-
-  if (program.args.length < 4) {
-    program.help();
-    process.exit(1);
+  if (process.argv.length < 4) {
+    throw new Error('monitor <port> <configPath> <logPath>');
   }
+
+  const port = process.argv[2];
+  const configPath = process.argv[3];
+  const logPath = process.argv[4];
+
+  winston.add(winston.transports.File, {
+    filename: logPath,
+  });
+  winston.remove(winston.transports.Console);
+
+  winston.info(`Using configuration at: ${configPath}`);
+
+  const portNum = parseInt(port, 10);
+
+  if (isNaN(portNum)) {
+    winston.error('Please pass a number for the port argument');
+  }
+
+  parseConfigs(configPath)
+    .then(configs => {
+      winston.info(JSON.stringify(configs));
+      const monitor = new Monitor(configs, configPath);
+      monitor.start(portNum);
+    })
+    .catch(err => {
+      winston.error(err);
+      process.exit(1);
+    });
 }
