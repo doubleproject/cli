@@ -67,6 +67,6 @@ function cleanEnv(env: string) {
     cleanETH(cfg.datadir, cfg.backend!);
     info(`Environment cleaned: ${env}`);
   } else {
-    throw new Error(`Environment not found: ${env}`);
+    throw new Error(`Unsupported chain: ${cfg.chain}`);
   }
 }

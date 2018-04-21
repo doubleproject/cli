@@ -1,6 +1,5 @@
 import * as fs from 'fs';
 
-import * as _ from 'lodash';
 import * as YAML from 'yamljs';
 
 import { ETHEREUM_BASE_CFG, ETHEREUM_DEFAULT_CFG } from '../data';
@@ -59,15 +58,7 @@ export default class Config {
     if (!cfg.envs[env]) {
       throw new Error(`Unable to find ${env} environment`);
     }
-
-    const envcfg = _.cloneDeep(cfg.envs[env]);
-    if (!envcfg.chain && cfg.chain) {
-      envcfg.chain = cfg.chain;
-    }
-    if (!envcfg.backend && cfg.backend) {
-      envcfg.backend = cfg.backend;
-    }
-    return envcfg;
+    return cfg.envs[env];
   }
 
   /**
