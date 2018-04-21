@@ -4,6 +4,15 @@ import { clean as cleanETH } from '../backend/ethereum';
 import Config from '../config';
 import { info } from '../lib/utils/shell';
 
+/**
+ * CLI entrypoint for cleaning a project or environment.
+ *
+ * When cleaning the entire project, the CLI will seek additional user
+ * confirmation. It is an error to clean an invalid environment.
+ *
+ * @param {string} env - The environment to clean. If omitted, the entire
+ *     project is cleaned.
+ */
 export function cli(env?: string) {
   env ? cleanEnv(env) : cleanProject(true);
 }

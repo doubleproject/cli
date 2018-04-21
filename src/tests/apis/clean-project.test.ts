@@ -4,6 +4,7 @@ import test from 'ava';
 import * as fs from 'fs-extra';
 
 import * as clean from '../../apis/clean';
+import run from '../utils/inquirer';
 
 test.before(t => {
   fs.copySync('data/tests/clean.yaml', 'clean-test/double.yaml');
@@ -15,18 +16,18 @@ test.before(t => {
   process.chdir('clean-test');
 });
 
-test('should be able to clean project', t => {
+test('should be able to clean project', async t => {
   t.true(fs.existsSync('local1/geth/hi.txt'));
   t.true(fs.existsSync('local3/geth/hi.txt'));
-  clean.cli();
+  await run(['clean'], ['y']);
   t.false(fs.existsSync('local1/geth/hi.txt'));
   t.false(fs.existsSync('local3/geth/hi.txt'));
   t.true(fs.existsSync('remote/geth/hi.txt'));
 });
 
-test.serial('should be able to clean environment', t => {
+test.serial('should be able to clean environment', async t => {
   t.true(fs.existsSync('local2/geth/hi.txt'));
-  clean.cli('local2');
+  await run(['clean', 'local2'], []);
   t.false(fs.existsSync('local2/geth/hi.txt'));
   t.true(fs.existsSync('local2/other/hi.txt'));
   t.true(fs.existsSync('local3/geth/hi.txt'));
