@@ -19,7 +19,13 @@ test.serial('init project config should fail with existing double.yaml', t => {
   });
 });
 
-test.serial('should be able to load initialized project config', t => {
+test.serial('get config with no double.yaml and nocascade should fail', t => {
+  t.throws(() => {
+    Config.get(true);
+  });
+});
+
+test('should be able to load initialized project config', t => {
   const cfg = Config.init('double-test');
 
   t.is(cfg.project, 'double-test');

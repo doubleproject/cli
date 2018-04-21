@@ -1,0 +1,26 @@
+project: clean-test
+chain: ethereum
+backend: geth
+envs:
+  local1:
+    networkID: 999
+    datadir: local1
+    local: true
+    hosts:
+      - 127.0.0.1:30302
+  local2:
+    networkID: 998
+    datadir: local2
+    local: true
+    hosts:
+      - 127.0.0.1:30303
+  local3:
+    networkID: 997
+    datadir: local3
+    local: true
+    hosts:
+      - 127.0.0.1:30304
+  remote:
+    datadir: remote
+    hosts:
+      - 127.0.0.1:30305

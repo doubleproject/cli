@@ -1,0 +1,8 @@
+project: config-test
+envs:
+  local:
+    networkID: 999
+    datadir: local
+    local: true
+    hosts:
+      - 127.0.0.1:30303

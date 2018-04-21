@@ -1,6 +1,5 @@
 import * as fs from 'fs';
 
-import * as _ from 'lodash';
 import * as YAML from 'yamljs';
 
 import { ETHEREUM_BASE_CFG, ETHEREUM_DEFAULT_CFG } from '../data';
@@ -42,11 +41,7 @@ export default class Config {
       return Config.parseFromFile(ETHEREUM_DEFAULT_CFG);
     }
 
-    try {
-      return Config.parseFromFile('double.yaml');
-    } catch {
-      throw new Error('Invalid double.yaml');
-    }
+    return Config.parseFromFile('double.yaml');
   }
 
   /**
@@ -58,20 +53,12 @@ export default class Config {
    *     config file when double.yaml doesn't exist in the current folder.
    * @returns {IEnvConfig} The project configuration for an environment.
    */
-  public static getForEnv(env: string, nocascade?: boolean): IEnvConfig | null {
+  public static getForEnv(env: string, nocascade?: boolean): IEnvConfig {
     const cfg = Config.get(nocascade);
     if (!cfg.envs[env]) {
-      return null;
+      throw new Error(`Unable to find ${env} environment`);
     }
-
-    const envcfg = _.cloneDeep(cfg.envs[env]);
-    if (!envcfg.chain && cfg.chain) {
-      envcfg.chain = cfg.chain;
-    }
-    if (!envcfg.backend && cfg.backend) {
-      envcfg.backend = cfg.backend;
-    }
-    return envcfg;
+    return cfg.envs[env];
   }
 
   /**

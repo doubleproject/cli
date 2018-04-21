@@ -4,7 +4,7 @@ import { test } from 'ava';
 import * as rp from 'request-promise';
 import * as rimraf from 'rimraf';
 import { IMonitoredNodeStatus, Monitor } from '../monitor';
-import { MockGeth } from './mockgeth';
+import { MockGeth } from './utils/geth';
 
 let port = 8080;
 const K_HEARTBEAT_INTERVAL = 1000;

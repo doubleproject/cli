@@ -45,9 +45,14 @@ export default class Geth {
     return {command: 'geth', options: ['--datadir', datadir, 'init', genesis]};
   }
 
-  public static cleanup(datadir: string, callback?: (error: Error) => void) {
-    const dir = path.join(datadir, 'geth');
-    callback ? fs.remove(dir, callback) : fs.removeSync(dir);
+  /**
+   * Cleans the entire geth folder (removing it).
+   *
+   * @param {string} datadir - The data directory. The geth subfolder will be
+   *     removed.
+   */
+  public static clean(datadir: string) {
+    fs.removeSync(path.join(datadir, 'geth'));
   }
 
   /**

@@ -60,7 +60,7 @@ export interface IProjectConfig {
   chain?: string;
 
   /**
-   * Local backend to use. Default is geth.
+   * Local backend to use. For ETH, the default is geth.
    *
    * For all local networks that don't specify a backend, this will be used.
    */
