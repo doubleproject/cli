@@ -43,7 +43,9 @@ test.beforeEach('Starting servers...', async t => {
 
   fs.ensureFileSync('testconfig.jl');
 
-  const monitor = new Monitor(config, 'testconfig.jl', K_HEARTBEAT_INTERVAL, K_FAILURE_TOLERANCE);
+  const monitor = new Monitor(
+    config, 'testconfig.jl', K_HEARTBEAT_INTERVAL, K_FAILURE_TOLERANCE,
+  );
 
   t.context = {
     server1: mockServer1,
@@ -90,7 +92,7 @@ test.afterEach.always('Shutting down servers...', async t => {
   });
 });
 
-test.serial('Monitor should report alive for both servers', async t => {
+test.serial('monitor should report alive for both servers', async t => {
   const context = t.context as ITestContext;
 
   const body = await rp.get({
@@ -106,18 +108,16 @@ test.serial('Monitor should report alive for both servers', async t => {
   t.is(status[1].alive, true);
 });
 
-test.serial('Monitor should report dead for dead servers', async t => {
+test.serial('monitor should report dead for dead servers', async t => {
   const context = t.context as ITestContext;
-
-  console.log(`Server1 running on port: ${context.server1Port}`);
-  console.log('Stopping server1...');
   context.server1.stop();
 
   await new Promise<void>(resolve => {
-    setTimeout(() => resolve(), K_HEARTBEAT_INTERVAL * (K_FAILURE_TOLERANCE + 1));
+    setTimeout(() =>
+      resolve(), K_HEARTBEAT_INTERVAL * (K_FAILURE_TOLERANCE + 1),
+    );
   });
 
-  console.log('Getting another status...');
   const body = await rp.get({
     url: `http://localhost:${context.monitorPort}/status`,
   });
@@ -134,7 +134,7 @@ test.serial('Monitor should report dead for dead servers', async t => {
   t.is(triedToReviveServer2, false);
 });
 
-test.serial('Monitor /add request should add a monitored instance', async t => {
+test.serial('monitor /add request should add a monitored instance', async t => {
   const context = t.context as ITestContext;
 
   await rp.post({
@@ -161,7 +161,9 @@ test.serial('Monitor /add request should add a monitored instance', async t => {
   t.is(status[2].alive, false);
 
   await new Promise<void>(resolve => {
-    setTimeout(() => resolve(), K_HEARTBEAT_INTERVAL * (K_FAILURE_TOLERANCE + 1));
+    setTimeout(() =>
+      resolve(), K_HEARTBEAT_INTERVAL * (K_FAILURE_TOLERANCE + 1),
+    );
   });
 
   const triedToReviveAddedServer = fs.existsSync('addedServer');
@@ -173,13 +175,17 @@ test.serial('Monitor /add request should add a monitored instance', async t => {
   rimraf.sync('addedServer');
 });
 
-test.serial('Monitor should not revive node before reaching failure tolerance', async t => {
-  const context = t.context as ITestContext;
+test.serial(
+  'monitor should not revive node before reaching failure tolerance',
+  async t => {
 
+  const context = t.context as ITestContext;
   context.server1.stop();
 
   await new Promise<void>(resolve => {
-    setTimeout(() => resolve(), K_HEARTBEAT_INTERVAL * (K_FAILURE_TOLERANCE - 2));
+    setTimeout(() =>
+      resolve(), K_HEARTBEAT_INTERVAL * (K_FAILURE_TOLERANCE - 2),
+    );
   });
 
   const body = await rp.get({

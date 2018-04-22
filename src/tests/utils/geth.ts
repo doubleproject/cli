@@ -27,7 +27,7 @@ export class MockGeth {
   }
 
   /**
-   * Start the mock server
+   * Start the mock server.
    */
   public start(port: number) {
     this.server = http.createServer(this.app);

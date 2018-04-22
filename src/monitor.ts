@@ -118,7 +118,7 @@ export class Monitor {
    * @param configPath The path to the configuration file
    * @param heartbeatInterval Number of milliseconds between each ping request
    * @param failureTolerance Number of failures monitor should tolerate before
-   * considering a node dead, and trying to revive it
+   *    considering a node dead, and trying to revive it.
    */
   constructor(nodes: IMonitoredNodeConfig[],
               configPath: string,
@@ -269,20 +269,23 @@ export class Monitor {
       try {
         for (const data of req.body.nodes) {
           const monitoredNodeConfig = validateMonitoredNodeConfig(data);
-          this.nodeStatuses.push(this.configToInitialNodeStatus(monitoredNodeConfig));
+          this.nodeStatuses.push(
+            this.configToInitialNodeStatus(monitoredNodeConfig));
           validConfigs.push(monitoredNodeConfig);
           this.appendConfigData(validConfigs);
           res.status(200).send('Ok');
         }
       } catch (err) {
-        res.status(400).send(`${req.body} contains invalid configuration, error: ${err}`);
+        res.status(400).send(
+          `${req.body} contains invalid configuration, error: ${err}`);
       }
     });
   }
 
   private tryRevive(node: IMonitoredNodeStatus) {
     if (node.failureCount < this.failureTolerance) {
-      winston.info(`${node.address} hasn't reached failure threshold yet, not reviving...`);
+      winston.info(
+        `${node.address} hasn't reached failure threshold, not reviving...`);
       return;
     }
 
@@ -335,7 +338,8 @@ export class Monitor {
           node.lastResponseId = nodeResp.id;
         }
       } catch (err) {
-        winston.error(`Failed to contact node at ${node.address}, reason: ${err}`);
+        winston.error(
+          `Failed to contact node at ${node.address}, reason: ${err}`);
         node.alive = false;
         node.failureCount++;
         this.tryRevive(node);
