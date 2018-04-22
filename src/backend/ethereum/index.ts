@@ -2,7 +2,8 @@ import * as path from 'path';
 
 import * as fs from 'fs-extra';
 
-import { ETHEREUM_PROJECT_GENESIS } from '../../data';
+import { IEnvConfig } from '../../config/schema';
+import { ETHEREUM_DATADIR, ETHEREUM_PROJECT_GENESIS } from '../../data';
 import Geth from './geth';
 
 /**
@@ -38,14 +39,23 @@ export function clean(datadir: string, backend: string) {
 
 /**
  * Starts a local backend.
+ *
+ * @param {IEnvConfig} config - The environment configuration.
  */
-export function start() {
-
+export function start(config: IEnvConfig) {
+  if (config.backend === 'geth') {
+    Geth.startScript({
+      datadir: ETHEREUM_DATADIR,
+      identity: 'boson',
+      nodiscover: true,
+      rpc: true,
+    });
+  }
 }
 
 /**
  * Stops a local backend.
  */
 export function stop() {
-
+  console.log('stop');
 }
