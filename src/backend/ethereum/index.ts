@@ -35,3 +35,17 @@ export function clean(datadir: string, backend: string) {
     throw new Error(`Unsupported Ethereum backend ${backend}`);
   }
 }
+
+/**
+ * Starts a local backend.
+ */
+export function start() {
+
+}
+
+/**
+ * Stops a local backend.
+ */
+export function stop() {
+
+}

@@ -3,13 +3,12 @@
 import * as program from 'commander';
 import { version } from 'pjson';
 
-import { ETHEREUM_DATADIR } from './data';
 import { executeSync, info } from './lib/utils/shell';
 
 import * as clean from './apis/clean';
 import * as init from './apis/init';
+import * as start from './apis/start';
 import * as status from './apis/status';
-import Geth from './backend/ethereum/geth';
 
 program.version(version);
 
@@ -36,16 +35,24 @@ program
   });
 
 program
-  .command('start')
-  .description('Start a new node')
+  .command('start [env]')
+  .description('Start a local environment')
   .action(() => {
-    const command = Geth.startScript({
-      datadir: ETHEREUM_DATADIR,
-      identity: 'boson',
-      nodiscover: true,
-      rpc: true,
-    });
-    executeSync(command);
+    start.cli();
+  });
+
+program
+  .command('stop [env]')
+  .description('Stop a local environment')
+  .action(() => {
+    console.log('stop');
+  });
+
+program
+  .command('restart [env]')
+  .description('Restart a local environment')
+  .action(() => {
+    console.log('restart');
   });
 
 program
