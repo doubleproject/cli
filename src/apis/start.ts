@@ -38,7 +38,7 @@ export function cli(env?: string) {
   startSingle(env, envcfg);
 }
 
-function startMulti(cfg: IProjectConfig, envs: string[]) {
+export function startMulti(cfg: IProjectConfig, envs: string[]) {
   const questions = [{
     type: 'list',
     name: 'env',
@@ -56,7 +56,7 @@ function startMulti(cfg: IProjectConfig, envs: string[]) {
  * @param {string} env - The name of the environment.
  * @param {IEnvConfig} cfg - The config of the environment.
  */
-function startSingle(env: string, cfg: IEnvConfig) {
+export function startSingle(env: string, cfg: IEnvConfig) {
   if (cfg.chain === 'ethereum') {
     ethereum.start(cfg);
   } else {
