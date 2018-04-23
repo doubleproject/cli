@@ -1,3 +1,5 @@
+import * as inquirer from 'inquirer';
+
 import * as ethereum from '../backend/ethereum';
 import Config from '../config';
 import { IEnvConfig, IProjectConfig } from '../config/schema';
@@ -28,16 +30,36 @@ export function cli(env?: string) {
       startMulti(cfg, envs);
       return;
     }
+
     envcfg = cfg.envs[envs[0]];
+    env = envs[0];
   }
 
-  if (envcfg.chain === 'ethereum') {
-    ethereum.start(envcfg);
-  } else {
-    throw new Error(`Invalid chain ${envcfg.chain}`);
-  }
+  startSingle(env, envcfg);
 }
 
 function startMulti(cfg: IProjectConfig, envs: string[]) {
-  console.log('hello');
+  const questions = [{
+    type: 'list',
+    name: 'env',
+    message: 'Select the local environment to start:',
+    choices: envs,
+  }];
+  inquirer.prompt(questions).then((answers: any) => {
+    startSingle(answers.env, cfg.envs[answers.env]);
+  });
+}
+
+/**
+ * Starts a single environment.
+ *
+ * @param {string} env - The name of the environment.
+ * @param {IEnvConfig} cfg - The config of the environment.
+ */
+function startSingle(env: string, cfg: IEnvConfig) {
+  if (cfg.chain === 'ethereum') {
+    ethereum.start(cfg);
+  } else {
+    throw new Error(`Invalid chain ${cfg.chain} for ${env} environment`);
+  }
 }
