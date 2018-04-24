@@ -43,10 +43,10 @@ program
   });
 
 program
-  .command('status')
+  .command('status [env]')
   .description('Get system and project status')
-  .action(() => {
-    status.cli();
+  .action(env => {
+    status.cli(env);
   });
 
 program.parse(process.argv);

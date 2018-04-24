@@ -45,6 +45,11 @@
         "production": {
           "description": "Whether the environment is for production",
           "type": "boolean"
+        },
+        "monitorPort": {
+          "description": "The port on which the monitor is listening, defaults to 8080",
+          "type": "number",
+          "default": 8080
         }
       },
       "type": "object",

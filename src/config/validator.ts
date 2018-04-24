@@ -15,6 +15,7 @@ export default class Validator {
     this.ajv = new Ajv({
       allErrors: true,
       verbose: true,
+      useDefaults: true,
       meta: require('ajv/lib/refs/json-schema-draft-06.json'),
     });
     this.ajv.addSchema(Schema, 'project');
