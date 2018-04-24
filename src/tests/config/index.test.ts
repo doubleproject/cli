@@ -47,3 +47,17 @@ test('default config should be valid', t => {
 test.afterEach.always(t => {
   fs.removeSync('double.yaml');
 });
+
+test('should be able to prune config', t => {
+  const cfg = Config.parseFromFile(ETHEREUM_DEFAULT_CFG);
+  cfg.envs.local.chain = 'ethereum';
+  cfg.envs.local.backend = 'geth';
+  Config.prune(cfg);
+  t.falsy(cfg.envs.local.chain);
+  t.falsy(cfg.envs.local.backend);
+
+  cfg.envs.local.chain = 'chain';
+  cfg.envs.local.backend = 'backend';
+  t.is(cfg.envs.local.chain, 'chain');
+  t.is(cfg.envs.local.backend, 'backend');
+});

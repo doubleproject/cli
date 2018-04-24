@@ -28,10 +28,8 @@ export default class Validator {
       cfg.backend = 'geth';
     }
 
-    for (const key in cfg.envs) {
-      if (cfg.envs.hasOwnProperty(key)) {
-        cfg.envs[key] = this.validateEnvConfig(cfg, cfg.envs[key]);
-      }
+    for (const key of Object.keys(cfg.envs)) {
+      cfg.envs[key] = this.validateEnvConfig(cfg, cfg.envs[key]);
     }
 
     return cfg;

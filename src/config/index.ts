@@ -21,7 +21,7 @@ export default class Config {
 
     const config = Config.parseFromFile(ETHEREUM_BASE_CFG);
     config.project = name;
-    fs.writeFileSync('double.yaml', YAML.stringify(config));
+    fs.writeFileSync('double.yaml', YAML.stringify(config, 4, 2));
     return config;
   }
 
@@ -69,5 +69,27 @@ export default class Config {
    */
   public static parseFromFile(path: string): IProjectConfig {
     return new Validator().validateProjectConfig(YAML.load(path));
+  }
+
+  /**
+   * Prunes a project config by removing default values from envs in place.
+   *
+   * @param {IProjectConfig} cfg - The project config object.
+   */
+  public static prune(cfg: IProjectConfig) {
+    if (!cfg.chain || !cfg.backend) {
+      return;
+    }
+
+    for (const key of Object.keys(cfg.envs)) {
+      const env = cfg.envs[key];
+      if (cfg.chain && env.chain === cfg.chain) {
+        delete env.chain;
+      }
+      if (cfg.backend && env.backend === cfg.backend) {
+        delete env.backend;
+      }
+      cfg.envs[key] = env;
+    }
   }
 }

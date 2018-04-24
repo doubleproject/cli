@@ -41,11 +41,8 @@ function cleanProjectWithConfirmation() {
 }
 
 function cleanProject() {
-  const cfg = Config.get();
-  for (const name in cfg.envs) {
-    if (cfg.envs.hasOwnProperty(name)) {
-      cleanEnv(name);
-    }
+  for (const key of Object.keys(Config.get().envs)) {
+    cleanEnv(key);
   }
 }
 
