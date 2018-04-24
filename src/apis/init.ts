@@ -79,13 +79,11 @@ export function cli() {
     task: (ctx, task) => {
       const subtasks = [];
       const envs = ctx.config.envs;
-      for (const env in envs) {
-        if (envs.hasOwnProperty(env)) {
-          const data = envs[env];
-          const subtask = data.local ?
-            localSetupTask(env, data) : remoteSetupTask(env, data);
-          subtasks.push(subtask);
-        }
+      for (const key of Object.keys(envs)) {
+        const data = envs[key];
+        const subtask = data.local ?
+          localSetupTask(key, data) : remoteSetupTask(key, data);
+        subtasks.push(subtask);
       }
       return new Listr(subtasks);
     },

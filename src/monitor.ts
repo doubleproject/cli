@@ -41,13 +41,11 @@ function validateMonitoredNodeConfig(data: any): IMonitoredNodeConfig {
     throw new Error('address is not a string');
   }
 
-  if (data.hasOwnProperty('reviveCmd') &&
-      typeof(data.reviveCmd) !== 'string') {
+  if (typeof(data.reviveCmd) !== 'string') {
     throw new Error('invalid reviveCmd field');
   }
 
-  if (data.hasOwnProperty('reviveArgs') &&
-      typeof(data.reviveArgs) !== 'string') {
+  if (typeof(data.reviveArgs) !== 'string') {
     throw new Error('invalid reviveArgs field');
   }
 
