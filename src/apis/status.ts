@@ -61,7 +61,12 @@ export interface IProjectStatus {
  *
  * @param env The name of the environment we are showing status for
  */
-export async function cli(env: string): Promise<IProjectStatus | undefined> {
+export async function cli(env: string, supressLogging?: boolean): Promise<IProjectStatus> {
+  const rendererConfig: {[index: string]: any} = {};
+  if (supressLogging) {
+    rendererConfig.renderer = require('listr-silent-renderer');
+  }
+
   const tasks = new Listr([
     {
       title: 'Reading Double configuration',
@@ -89,25 +94,22 @@ export async function cli(env: string): Promise<IProjectStatus | undefined> {
     getBalancesTask(),
     getBlockNumberTask(),
     getProtocolVersionTask(),
-  ]);
+  ], rendererConfig);
 
-  try {
-    const ctx = await tasks.run();
-    const status = {
-      balances: ctx.allBalances,
-      projConfig: ctx.projConfig,
-      environment: ctx.env,
-      envConfig: ctx.envConfig,
-      blockNumber: ctx.blockNumber,
-      protocolVersion: ctx.protocolVersion,
-    };
+  const taskContext = await tasks.run();
+  const status = {
+    balances: taskContext.allBalances,
+    projConfig: taskContext.projConfig,
+    environment: taskContext.env,
+    envConfig: taskContext.envConfig,
+    blockNumber: taskContext.blockNumber,
+    protocolVersion: taskContext.protocolVersion,
+  };
 
+  if (!supressLogging) {
     console.log(renderTable(status));
-    return status;
-  } catch (err) {
-    console.error(err.message);
-    return undefined;
   }
+  return status;
 }
 
 /**
