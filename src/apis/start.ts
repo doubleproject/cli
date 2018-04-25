@@ -3,6 +3,7 @@ import * as inquirer from 'inquirer';
 import * as ethereum from '../backend/ethereum';
 import Config from '../config';
 import { IEnvConfig, IProjectConfig } from '../config/schema';
+import { info } from '../lib/utils/shell';
 
 export function cli(env?: string) {
   const cfg = Config.get();
@@ -57,6 +58,7 @@ export function startMulti(cfg: IProjectConfig, envs: string[]) {
  * @param {IEnvConfig} cfg - The config of the environment.
  */
 export function startSingle(env: string, cfg: IEnvConfig) {
+  info(`Starting ${env} environment`);
   if (cfg.chain === 'ethereum') {
     ethereum.start(cfg);
   } else {
