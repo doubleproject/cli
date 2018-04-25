@@ -1,4 +1,5 @@
 import * as fs from 'fs-extra';
+import * as winston from 'winston';
 
 import { test } from 'ava';
 import * as rp from 'request-promise';
@@ -19,6 +20,12 @@ interface ITestContext {
   server2Port: number;
   monitorPort: number;
 }
+
+test.before('Configuring test logger...', () => {
+  winston.configure({
+    level: 'error',
+  });
+});
 
 test.beforeEach('Starting servers...', async t => {
   const mockServer1 = new MockGeth('999');
