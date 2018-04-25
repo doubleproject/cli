@@ -25,6 +25,11 @@ export default class Validator {
     const cfg = this.validate(config);
 
     cfg.chain = cfg.chain || 'ethereum';
+
+    if (!ALLOWED_BACKENDS.has(config.chain)) {
+      throw new Error(`Invalid chain ${cfg.chain}`);
+    }
+
     if (cfg.chain === 'ethereum' && !cfg.backend) {
       cfg.backend = 'geth';
     }

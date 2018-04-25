@@ -6,8 +6,7 @@
       "properties": {
         "backend": {
           "description": "Backend for a local network",
-          "type": "string",
-          "default": "geth"
+          "type": "string"
         },
         "chain": {
           "description": "Name of the chain",
