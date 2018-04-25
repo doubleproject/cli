@@ -1,0 +1,12 @@
+project: status-test-project
+chain: ethereum
+backend: geth
+envs:
+  local:
+    networkID: 999
+    datadir: ~/.double/ethereum
+    local: true
+    hosts:
+      - 127.0.0.1:30303
+      - 127.0.0.1:30304
+    monitorPort: 9090
