@@ -1,10 +1,25 @@
 import { BigNumber } from 'bignumber.js';
 import * as Listr from 'listr';
 import * as rp from 'request-promise';
+import { table } from 'table';
 
 import Config from '../config';
 import { IEnvConfig, IProjectConfig } from '../config/schema';
 import { IMonitoredNodeStatus } from '../monitor';
+
+function makeJSONRPCRequest(method: string, params: string[]): any {
+  return {
+    headers: {
+      'content-type': 'application/json',
+    },
+    json: {
+      jsonrpc: '2.0',
+      id: 1,
+      method,
+      params,
+    }
+  };
+}
 
 /**
  * CLI entrypoint for boson status.
@@ -41,46 +56,70 @@ export function cli(env: string) {
 
       },
     },
-    getProjectInfoTask(),
     getAliveNodesTask(),
     getExistingAccountsTask(),
     getBalancesTask(),
+    getBlockNumberTask(),
+    getProtocolVersionTask(),
   ]);
 
   tasks.run()
     .then(ctx => {
-      // TODO: Log this information in a more user friendly format.
-      console.log(ctx.projectInfo);
-      console.log(ctx.allBalances);
+      const tableOutput =
+        renderTable(ctx.allBalances,
+                    ctx.projConfig,
+                    ctx.env,
+                    ctx.envConfig,
+                    ctx.blockNumber,
+                    ctx.protocolVersion);
+      console.log(tableOutput);
     })
     .catch(err => {
       console.log(err.message);
   });
 }
 
-function getProjectInfoTask(): Listr.ListrTask {
-  return {
-    title: 'Getting project information',
-    task: ctx => {
-      const projConfig = ctx.projConfig as IProjectConfig;
-      const env = ctx.env as string;
+interface IAccountBalance {
+  account: string;
+  balance: BigNumber;
+}
 
-      const envConfig = ctx.envConfig as IEnvConfig;
+/**
+ * Use
+ */
+function renderTable(balances: IAccountBalance[],
+                     projConfig: IProjectConfig,
+                     envName: string,
+                     envConfig: IEnvConfig,
+                     blockNumber: BigNumber,
+                     protocolVersion: BigNumber): string {
+  const tableData: any[] = [];
 
-      const projectInfo = `Project: ${projConfig.project}\
-\nBackend: ${projConfig.backend}\
-\nChain: ${projConfig.chain}`;
+  tableData.push(
+    ['Project', projConfig.project, '']);
+  tableData.push(
+    ['Chain', projConfig.chain, '']);
+  tableData.push(
+    ['Backend', projConfig.backend, '']);
+  tableData.push(
+    ['Environment', envName, '']);
+  tableData.push(
+    ['Mode', envConfig.local ? 'local' : 'remote', '']);
 
-      let envInfo = `Environment: ${env}\
-\nDatadir: ${envConfig.datadir}`;
+  envConfig.hosts.forEach((host, idx) => {
+    tableData.push([`Node[${idx}]`, host, '']);
+  });
 
-      envConfig.hosts.forEach((host, idx) => {
-        envInfo += `\nHost[${idx}] = ${host}`;
-      });
+  balances.forEach((acctBalance, idx) => {
+    tableData.push([`Account[${idx}]`, acctBalance.account, acctBalance.balance.toString()]);
+  });
 
-      ctx.projectInfo = projectInfo + '\n' + envInfo;
-    },
-  };
+  tableData.push(
+    ['Current Block Number', blockNumber.toString(), '']);
+  tableData.push(
+    ['Protocol Version', protocolVersion.toString(), '']);
+
+  return table(tableData);
 }
 
 /**
@@ -140,17 +179,8 @@ function getExistingAccountsTask(): Listr.ListrTask {
     task: async ctx => {
       const aliveNodes = ctx.aliveNodes as IMonitoredNodeStatus[];
       const responses = await Promise.all<string[]>(aliveNodes.map(async node => {
-        const accountResp = await rp.post(`http://${node.address}`, {
-          headers: {
-            'content-type': 'application/json',
-          },
-          json: {
-            jsonrpc: '2.0',
-            method: 'eth_accounts',
-            params: [],
-            id: 1,
-          },
-        });
+        const accountResp = await rp.post(`http://${node.address}`,
+                                          makeJSONRPCRequest('eth_accounts', []));
 
         return accountResp.result;
       }));
@@ -179,22 +209,13 @@ function getBalancesTask(): Listr.ListrTask {
       const node = ctx.aliveNodes[0];
       const accounts = ctx.allAccounts as string[];
       const balances = await Promise.all<BigNumber>(accounts.map(async acct => {
-        const resp = await rp.post(`http://${node.address}`, {
-          headers: {
-            'content-type': 'application/json',
-          },
-          json: {
-            jsonrpc: '2.0',
-            method: 'eth_getBalance',
-            params: [acct, 'latest'],
-            id: 1,
-          },
-        });
+        const resp = await rp.post(`http://${node.address}`,
+                                   makeJSONRPCRequest('eth_getBalance', [acct, 'latest']));
 
         return new BigNumber(resp.result);
       }));
 
-      const acctsWithBalances = accounts.map((acct, idx) => {
+      const acctsWithBalances: IAccountBalance[] = accounts.map((acct, idx) => {
         return {
           account: acct,
           balance: balances[idx],
@@ -204,4 +225,48 @@ function getBalancesTask(): Listr.ListrTask {
       ctx.allBalances = acctsWithBalances;
     },
   };
+}
+
+/**
+ * Use JSON-RPC to get the current block number. Sets the `blockNumber`
+ * property on context.
+ */
+function getBlockNumberTask(): Listr.ListrTask {
+  return {
+    title: 'Getting block number',
+    skip: ctx => {
+      if (!ctx.aliveNodes) {
+        return 'There are no alive network nodes to query.';
+      }
+      return false;
+    },
+    task: async ctx => {
+      const node = ctx.aliveNodes[0];
+      const blockNumResp = await rp.post(`http://${node.address}`,
+                                         makeJSONRPCRequest('eth_blockNumber', []));
+      ctx.blockNumber = new BigNumber(blockNumResp.result);
+    },
+  };
+}
+
+/**
+ * Use JSON-RPC to get the ethereum protocol version. Sets the `protocolVersion`
+ * property on the context.
+ */
+function getProtocolVersionTask(): Listr.ListrTask {
+  return {
+    title: 'Getting protocol version',
+    skip: ctx => {
+      if (!ctx.aliveNodes) {
+        return 'There are no alive network nodes to query.';
+      }
+      return false;
+    },
+    task: async ctx => {
+      const node = ctx.aliveNodes[0];
+      const protocolVersionResp = await rp.post(`http://${node.address}`,
+                                            makeJSONRPCRequest('eth_protocolVersion', []));
+      ctx.protocolVersion = new BigNumber(protocolVersionResp.result);
+    }
+  }
 }
