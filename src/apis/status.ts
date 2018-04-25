@@ -17,8 +17,36 @@ function makeJSONRPCRequest(method: string, params: string[]): any {
       id: 1,
       method,
       params,
-    }
+    },
   };
+}
+
+export interface IAccountBalance {
+  /** The account address */
+  account: string;
+
+  /** The balance at this address (in Wei) */
+  balance: BigNumber;
+}
+
+export interface IProjectStatus {
+  /** The balances of accounts owned by nodes in the project */
+  balances: IAccountBalance[];
+
+  /** The project configuration */
+  projConfig: IProjectConfig;
+
+  /** The name of the configuration */
+  environment: string;
+
+  /** The environment configuraiton */
+  envConfig: IEnvConfig;
+
+  /** The current block number of the network */
+  blockNumber: BigNumber;
+
+  /** The current protocol version of the network */
+  protocolVersion: BigNumber;
 }
 
 /**
@@ -33,7 +61,7 @@ function makeJSONRPCRequest(method: string, params: string[]): any {
  *
  * @param env The name of the environment we are showing status for
  */
-export function cli(env: string) {
+export async function cli(env: string): Promise<IProjectStatus | undefined> {
   const tasks = new Listr([
     {
       title: 'Reading Double configuration',
@@ -63,61 +91,54 @@ export function cli(env: string) {
     getProtocolVersionTask(),
   ]);
 
-  tasks.run()
-    .then(ctx => {
-      const tableOutput =
-        renderTable(ctx.allBalances,
-                    ctx.projConfig,
-                    ctx.env,
-                    ctx.envConfig,
-                    ctx.blockNumber,
-                    ctx.protocolVersion);
-      console.log(tableOutput);
-    })
-    .catch(err => {
-      console.log(err.message);
-  });
-}
+  try {
+    const ctx = await tasks.run();
+    const status = {
+      balances: ctx.allBalances,
+      projConfig: ctx.projConfig,
+      environment: ctx.env,
+      envConfig: ctx.envConfig,
+      blockNumber: ctx.blockNumber,
+      protocolVersion: ctx.protocolVersion,
+    };
 
-interface IAccountBalance {
-  account: string;
-  balance: BigNumber;
+    console.log(renderTable(status));
+    return status;
+  } catch (err) {
+    console.error(err.message);
+    return undefined;
+  }
 }
 
 /**
  * Use
  */
-function renderTable(balances: IAccountBalance[],
-                     projConfig: IProjectConfig,
-                     envName: string,
-                     envConfig: IEnvConfig,
-                     blockNumber: BigNumber,
-                     protocolVersion: BigNumber): string {
+function renderTable(status: IProjectStatus): string {
   const tableData: any[] = [];
 
   tableData.push(
-    ['Project', projConfig.project, '']);
+    ['Project', status.projConfig.project, '']);
   tableData.push(
-    ['Chain', projConfig.chain, '']);
+    ['Chain', status.projConfig.chain, '']);
   tableData.push(
-    ['Backend', projConfig.backend, '']);
+    ['Backend', status.projConfig.backend, '']);
   tableData.push(
-    ['Environment', envName, '']);
+    ['Environment', status.environment, '']);
   tableData.push(
-    ['Mode', envConfig.local ? 'local' : 'remote', '']);
+    ['Mode', status.envConfig.local ? 'local' : 'remote', '']);
 
-  envConfig.hosts.forEach((host, idx) => {
+  status.envConfig.hosts.forEach((host, idx) => {
     tableData.push([`Node[${idx}]`, host, '']);
   });
 
-  balances.forEach((acctBalance, idx) => {
+  status.balances.forEach((acctBalance, idx) => {
     tableData.push([`Account[${idx}]`, acctBalance.account, acctBalance.balance.toString()]);
   });
 
   tableData.push(
-    ['Current Block Number', blockNumber.toString(), '']);
+    ['Current Block Number', status.blockNumber.toString(), '']);
   tableData.push(
-    ['Protocol Version', protocolVersion.toString(), '']);
+    ['Protocol Version', status.protocolVersion.toString(), '']);
 
   return table(tableData);
 }
@@ -267,6 +288,6 @@ function getProtocolVersionTask(): Listr.ListrTask {
       const protocolVersionResp = await rp.post(`http://${node.address}`,
                                             makeJSONRPCRequest('eth_protocolVersion', []));
       ctx.protocolVersion = new BigNumber(protocolVersionResp.result);
-    }
-  }
+    },
+  };
 }
