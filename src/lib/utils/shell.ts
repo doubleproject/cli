@@ -39,13 +39,13 @@ export function execute(input: ISpawnInput, logFile: string): ChildProcess {
 }
 
 export function info(message: string) {
-  console.log(chalk.bgCyan('boson') + chalk.cyan(' INFO ') + message);
+  console.log(chalk.cyan(' INFO ') + message);
 }
 
 export function error(message: string) {
-  console.log(chalk.bgCyan('boson') + chalk.red(' ERROR ') + message);
+  console.log(chalk.red(' ERROR ') + message);
 }
 
 export function fatal(message: string) {
-  console.log('boson' + chalk.red(' FATAL ') + message);
+  console.log(chalk.red(' FATAL ') + message);
 }

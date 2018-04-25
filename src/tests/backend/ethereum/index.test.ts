@@ -21,6 +21,18 @@ test('create genesis should error out if already exists', t => {
   });
 });
 
+test('should not be able to clean invalid backend', t => {
+  t.throws(() => {
+    eth.clean('', 'invalid');
+  });
+});
+
+test('should not be able to start invalid backend', t => {
+  t.throws(() => {
+    eth.start({chain: 'ethereum', backend: 'invalid', datadir: '', hosts: []});
+  });
+});
+
 test.after.always(t => {
   fs.removeSync('eth-test');
 });
