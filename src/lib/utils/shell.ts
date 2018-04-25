@@ -45,7 +45,3 @@ export function info(message: string) {
 export function error(message: string) {
   console.log(chalk.red(' ERROR ') + message);
 }
-
-export function fatal(message: string) {
-  console.log(chalk.red(' FATAL ') + message);
-}
