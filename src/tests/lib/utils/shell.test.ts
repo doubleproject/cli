@@ -9,7 +9,7 @@ test('should be able to start detached process', async t => {
     setTimeout(() => {
       t.is(fs.readFileSync('exec.log').toString().trim(), 'output');
       resolve();
-    }, 500);
+    }, 1000);
   });
 });
 
