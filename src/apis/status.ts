@@ -103,9 +103,7 @@ function getProjectConfigTask(env: string): Listr.ListrTask {
         throw new Error(`Cannot find any project configuration, please run double init`);
       }
 
-      try {
-        Config.getForEnv(env);
-      } catch (err) {
+      if (!(env in ctx.projConfig.envs)) {
         throw new Error(`Cannot find environment named ${env}, please check your configuration.`);
       }
 
