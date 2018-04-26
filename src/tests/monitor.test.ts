@@ -105,7 +105,7 @@ test.serial('monitor should report dead for dead servers', async t => {
   await context.server1.stop();
 
   await new Promise<void>(resolve => {
-    setTimeout(() => resolve(), K_HEARTBEAT_INTERVAL * (K_FAILURE_TOLERANCE + 1));
+    setTimeout(() => resolve(), K_HEARTBEAT_INTERVAL * (K_FAILURE_TOLERANCE + 2));
   });
 
   const body = await rp.get({
