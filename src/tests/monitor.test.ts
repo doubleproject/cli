@@ -56,44 +56,36 @@ test.beforeEach('Starting servers...', async t => {
 
   const context = t.context as ITestContext;
 
-  context.server1.start(port1);
-  context.server2.start(port2);
-  context.monitor.start(port3);
+  await Promise.all([
+    context.server1.start(port1),
+    context.server2.start(port2),
+    context.monitor.start(port3)]);
 
   context.server1Port = port1;
   context.server2Port = port2;
   context.monitorPort = port3;
-
-  // Sleep for 1 second to let the monitor catch up.
-  return new Promise<void>((resolve, reject) => {
-    setTimeout(() => {
-      resolve();
-    }, 1000);
-  });
 });
 
 test.afterEach.always('Shutting down servers...', async t => {
   const context = t.context as ITestContext;
 
-  context.server1.stop();
-  context.server2.stop();
-  context.monitor.stop();
+  await Promise.all([
+    context.server1.stop(),
+    context.server2.stop(),
+    context.monitor.stop()]);
 
   rimraf.sync('server1');
   rimraf.sync('server2');
 
   rimraf.sync('testconfig.jl');
-
-  // Sleep for 1 second to let the monitor catch up.
-  return new Promise<void>((resolve, reject) => {
-    setTimeout(() => {
-      resolve();
-    }, 1000);
-  });
 });
 
 test.serial('monitor should report alive for both servers', async t => {
   const context = t.context as ITestContext;
+
+  await new Promise<void>(resolve => {
+    setTimeout(() => resolve(), K_HEARTBEAT_INTERVAL * 1.5);
+  });
 
   const body = await rp.get({
     url: `http://localhost:${context.monitorPort}/status`,
@@ -110,12 +102,10 @@ test.serial('monitor should report alive for both servers', async t => {
 
 test.serial('monitor should report dead for dead servers', async t => {
   const context = t.context as ITestContext;
-  context.server1.stop();
+  await context.server1.stop();
 
   await new Promise<void>(resolve => {
-    setTimeout(() =>
-      resolve(), K_HEARTBEAT_INTERVAL * (K_FAILURE_TOLERANCE + 1),
-    );
+    setTimeout(() => resolve(), K_HEARTBEAT_INTERVAL * (K_FAILURE_TOLERANCE + 1));
   });
 
   const body = await rp.get({
@@ -150,6 +140,10 @@ test.serial('monitor /add request should add a monitored instance', async t => {
     },
   });
 
+  await new Promise<void>(resolve => {
+    setTimeout(() => resolve(), K_HEARTBEAT_INTERVAL * (K_FAILURE_TOLERANCE + 1));
+  });
+
   const body = await rp.get({
     url: `http://localhost:${context.monitorPort}/status`,
   });
@@ -180,7 +174,7 @@ test.serial(
   async t => {
 
   const context = t.context as ITestContext;
-  context.server1.stop();
+  await context.server1.stop();
 
   await new Promise<void>(resolve => {
     setTimeout(() =>

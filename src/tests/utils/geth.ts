@@ -29,19 +29,29 @@ export class MockGeth {
   /**
    * Start the mock server.
    */
-  public start(port: number) {
-    this.server = http.createServer(this.app);
-    this.server.listen(port);
+  public async start(port: number): Promise<void> {
+    const promise = new Promise<void>(resolve => {
+      this.server = http.createServer(this.app);
+      this.server.listen(port, () => resolve());
+    });
+
+    return promise;
   }
 
   /**
    * Stop the mock server.
    */
-  public stop() {
-    if (typeof(this.server) !== 'undefined') {
-      this.server.close();
-      this.server = undefined;
-    }
+  public async stop(): Promise<void> {
+    const promise = new Promise<void>(resolve => {
+      if (typeof(this.server) !== 'undefined') {
+        this.server.close(() => resolve());
+        this.server = undefined;
+      } else {
+        resolve();
+      }
+    });
+
+    return promise;
   }
 
   private setupRouting() {
