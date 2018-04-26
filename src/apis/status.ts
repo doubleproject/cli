@@ -57,33 +57,16 @@ export interface IProjectStatus {
  * - Useful commands.
  *
  * @param env The name of the environment we are showing status for
- * @param supressLogging If truthy, then nothing will be printed to the console.
+ * @param suppressLogging If truthy, then nothing will be printed to the console.
  */
-export async function cli(env: string, supressLogging?: boolean): Promise<IProjectStatus> {
+export async function cli(env: string, suppressLogging?: boolean): Promise<IProjectStatus> {
   const rendererConfig: {[index: string]: any} = {};
-  if (supressLogging) {
+  if (suppressLogging) {
     rendererConfig.renderer = require('listr-silent-renderer');
   }
 
   const tasks = new Listr([
-    {
-      title: 'Reading Double configuration',
-      task: ctx => {
-        try {
-          ctx.projConfig = Config.get();
-        } catch (err) {
-          throw new Error(`Cannot find any project configuration, please run double init`);
-        }
-
-        try {
-          Config.getForEnv(env);
-        } catch (err) {
-          throw new Error(`Cannot find environment named ${env}, please check your configuration.`);
-        }
-
-        ctx.env = env;
-      },
-    },
+    getProjectConfigTask(env),
     getAliveNodesTask(),
     getExistingAccountsTask(),
     getBalancesTask(),
@@ -100,14 +83,39 @@ export async function cli(env: string, supressLogging?: boolean): Promise<IProje
     protocolVersion: taskContext.protocolVersion,
   };
 
-  if (!supressLogging) {
+  if (!suppressLogging) {
     console.log(renderTable(status));
   }
   return status;
 }
 
 /**
- * Use
+ * Read project configuration, sets the `projConfig` and `env` property on
+ * context.
+ */
+function getProjectConfigTask(env: string): Listr.ListrTask {
+  return {
+    title: 'Reading Double configuration',
+    task: ctx => {
+      try {
+        ctx.projConfig = Config.get();
+      } catch (err) {
+        throw new Error(`Cannot find any project configuration, please run double init`);
+      }
+
+      try {
+        Config.getForEnv(env);
+      } catch (err) {
+        throw new Error(`Cannot find environment named ${env}, please check your configuration.`);
+      }
+
+      ctx.env = env;
+    },
+  };
+}
+
+/**
+ * Use the project status to build a human readable table.
  */
 function renderTable(status: IProjectStatus): string {
   const tableData: any[] = [];
