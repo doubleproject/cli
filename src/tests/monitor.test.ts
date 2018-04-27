@@ -193,3 +193,24 @@ test.serial(
   const triedToReviveServer1 = fs.existsSync('server1');
   t.is(triedToReviveServer1, false);
 });
+
+test.serial('monitor stop should be idempotent', async t => {
+  const context = t.context as ITestContext;
+
+  await context.monitor.stop();
+  await context.monitor.stop();
+
+  t.pass();
+});
+
+test.serial('monitor should reject invalid constructor parameters', async t => {
+  t.throws(() => {
+    const monitor = new Monitor([], 'testconfig.jl', -100, -2);
+    monitor.stop();
+  });
+
+  t.throws(() => {
+    const monitor = new Monitor([], 'testconfig.jl', 5000, -2);
+    monitor.stop();
+  });
+});
