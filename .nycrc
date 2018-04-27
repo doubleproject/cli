@@ -1,5 +1,5 @@
 {
   "exclude": [
-    "src/tests/*.ts"
+    "src/tests/**/*.ts"
   ]
 }

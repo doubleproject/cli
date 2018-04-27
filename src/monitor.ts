@@ -160,27 +160,33 @@ export class Monitor {
   /**
    * Start the embedded HTTP server to process requests on the given port.
    */
-  public start(port: number) {
+  public async start(port: number): Promise<void> {
     this.timer = this.createPingTimer();
     this.ping();
 
-    this.server = http.createServer(this.app);
-    this.server.listen(port);
+    return new Promise<void>(resolve => {
+      this.server = http.createServer(this.app);
+      this.server.listen(port, () => resolve());
+    });
   }
 
   /**
    * Stop the HTTP server.
    */
-  public stop() {
+  public async stop(): Promise<void> {
     if (typeof this.timer !== 'undefined') {
       clearInterval(this.timer);
       this.timer = undefined;
     }
 
-    if (typeof this.server !== 'undefined') {
-      this.server.close();
-      this.server = undefined;
-    }
+    return new Promise<void>(resolve => {
+      if (typeof this.server !== 'undefined') {
+        this.server.close(() => resolve());
+        this.server = undefined;
+      } else {
+        resolve();
+      }
+    });
   }
 
   private validateNetVersionResponse(data: any): INetVersionResponse {
