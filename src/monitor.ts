@@ -164,12 +164,10 @@ export class Monitor {
     this.timer = this.createPingTimer();
     this.ping();
 
-    const promise = new Promise<void>(resolve => {
+    return new Promise<void>(resolve => {
       this.server = http.createServer(this.app);
       this.server.listen(port, () => resolve());
     });
-
-    return promise;
   }
 
   /**
@@ -181,7 +179,7 @@ export class Monitor {
       this.timer = undefined;
     }
 
-    const promise = new Promise<void>(resolve => {
+    return new Promise<void>(resolve => {
       if (typeof this.server !== 'undefined') {
         this.server.close(() => resolve());
         this.server = undefined;
@@ -189,8 +187,6 @@ export class Monitor {
         resolve();
       }
     });
-
-    return promise;
   }
 
   private validateNetVersionResponse(data: any): INetVersionResponse {
