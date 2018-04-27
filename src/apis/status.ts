@@ -164,19 +164,19 @@ function getAliveNodesTask(): Listr.ListrTask {
   return {
     title: 'Getting network information',
     skip: ctx => {
-      const envConfig = ctx.projConfig.envs[ctx.env];
-      if (typeof envConfig.monitorPort === 'undefined') {
+      const projConfig = ctx.projConfig;
+      if (typeof projConfig.monitorPort === 'undefined') {
         throw new Error('Double monitor port is not specified!');
       }
     },
     task: async ctx => {
-      const envConfig = ctx.projConfig.envs[ctx.env];
-      const nodeStatuses = await rp.get(`http://localhost:${envConfig.monitorPort}/status`);
+      const projConfig = ctx.projConfig;
+      const nodeStatuses = await rp.get(`http://localhost:${projConfig.monitorPort}/status`);
       const nodeStatusesJSON = JSON.parse(nodeStatuses) as IMonitoredNodeStatus[];
       const aliveNodes = nodeStatusesJSON.filter(node => node.alive);
 
       if (aliveNodes.length === 0) {
-        if (envConfig.local) {
+        if (projConfig.envs[ctx.env].local) {
           throw new Error('All local nodes are down, please run double start');
         }
 

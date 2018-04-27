@@ -9,4 +9,4 @@ envs:
     hosts:
       - 127.0.0.1:30303
       - 127.0.0.1:30304
-    monitorPort: 9090
+monitorPort: 9090
