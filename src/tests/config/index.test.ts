@@ -44,6 +44,17 @@ test('default config should be valid', t => {
   t.is(cfg.envs.local!.networkID, 999);
 });
 
+test('default test config should be valid', t => {
+  const cfg = Config.parseFromFile('data/tests/default.yaml');
+
+  t.is(cfg.project, 'config-test');
+  t.is(cfg.chain, 'ethereum');
+  t.is(cfg.envs.local!.backend, 'geth');
+  t.is(cfg.envs.local!.datadir, '~/.double/ethereum');
+  t.deepEqual(cfg.envs.local!.hosts, ['127.0.0.1:30303', {host: '127.0.0.1', port: 30304, rpcPort: 8546}]);
+  t.is(cfg.envs.local!.networkID, 999);
+});
+
 test.afterEach.always(t => {
   fs.removeSync('double.yaml');
 });

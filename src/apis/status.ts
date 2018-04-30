@@ -34,7 +34,7 @@ export interface IProjectStatus {
   balances: IAccountBalance[];
 
   /** The project configuration */
-  projConfig: IProjectConfig;
+  config: IProjectConfig;
 
   /** The name of the environment configuration */
   environment: string;
@@ -77,7 +77,7 @@ export async function cli(env: string, suppressLogging?: boolean): Promise<IProj
   const taskContext = await tasks.run();
   const status = {
     balances: taskContext.allBalances,
-    projConfig: taskContext.projConfig,
+    config: taskContext.config,
     environment: taskContext.env,
     blockNumber: taskContext.blockNumber,
     protocolVersion: taskContext.protocolVersion,
@@ -90,7 +90,7 @@ export async function cli(env: string, suppressLogging?: boolean): Promise<IProj
 }
 
 /**
- * Read project configuration, sets the `projConfig` and `env` property on
+ * Read project configuration, sets the `config` and `env` property on
  * context.
  */
 function getProjectConfigTask(env: string): Listr.ListrTask {
@@ -98,12 +98,12 @@ function getProjectConfigTask(env: string): Listr.ListrTask {
     title: 'Reading Double configuration',
     task: ctx => {
       try {
-        ctx.projConfig = Config.get();
+        ctx.config = Config.get();
       } catch (err) {
         throw new Error(`Cannot find any project configuration, please run double init`);
       }
 
-      if (!(env in ctx.projConfig.envs)) {
+      if (!(env in ctx.config.envs)) {
         throw new Error(`Cannot find environment named ${env}, please check your configuration.`);
       }
 
@@ -118,14 +118,14 @@ function getProjectConfigTask(env: string): Listr.ListrTask {
 function renderTable(status: IProjectStatus): string {
   const tableData: any[] = [];
 
-  const envConfig = status.projConfig.envs[status.environment];
+  const envConfig = status.config.envs[status.environment];
 
   tableData.push(
-    ['Project', status.projConfig.project, '']);
+    ['Project', status.config.project, '']);
   tableData.push(
-    ['Chain', status.projConfig.chain, '']);
+    ['Chain', status.config.chain, '']);
   tableData.push(
-    ['Backend', status.projConfig.backend, '']);
+    ['Backend', status.config.backend, '']);
   tableData.push(
     ['Environment', status.environment, '']);
   tableData.push(
@@ -164,19 +164,19 @@ function getAliveNodesTask(): Listr.ListrTask {
   return {
     title: 'Getting network information',
     skip: ctx => {
-      const projConfig = ctx.projConfig;
-      if (typeof projConfig.monitorPort === 'undefined') {
+      const config = ctx.config;
+      if (typeof config.monitorPort === 'undefined') {
         throw new Error('Double monitor port is not specified!');
       }
     },
     task: async ctx => {
-      const projConfig = ctx.projConfig;
-      const nodeStatuses = await rp.get(`http://localhost:${projConfig.monitorPort}/status`);
+      const config = ctx.config;
+      const nodeStatuses = await rp.get(`http://localhost:${config.monitorPort}/status`);
       const nodeStatusesJSON = JSON.parse(nodeStatuses) as IMonitoredNodeStatus[];
       const aliveNodes = nodeStatusesJSON.filter(node => node.alive);
 
       if (aliveNodes.length === 0) {
-        if (projConfig.envs[ctx.env].local) {
+        if (config.envs[ctx.env].local) {
           throw new Error('All local nodes are down, please run double start');
         }
 
@@ -204,8 +204,9 @@ function getExistingAccountsTask(): Listr.ListrTask {
     task: async ctx => {
       const aliveNodes = ctx.aliveNodes as IMonitoredNodeStatus[];
       const responses = await Promise.all<string[]>(aliveNodes.map(async node => {
-        const accountResp = await rp.post(`http://${node.address}`,
-                                          buildJSONRPCRequestPayload('eth_accounts', []));
+        const accountResp =
+          await rp.post(`http://${node.address}`,
+                        buildJSONRPCRequestPayload('eth_accounts', []));
 
         return accountResp.result;
       }));
@@ -234,8 +235,9 @@ function getBalancesTask(): Listr.ListrTask {
       const node = ctx.aliveNodes[0];
       const accounts = ctx.allAccounts as string[];
       const balances = await Promise.all<BigNumber>(accounts.map(async acct => {
-        const resp = await rp.post(`http://${node.address}`,
-                                   buildJSONRPCRequestPayload('eth_getBalance', [acct, 'latest']));
+        const resp =
+          await rp.post(`http://${node.address}`,
+                        buildJSONRPCRequestPayload('eth_getBalance', [acct, 'latest']));
 
         return new BigNumber(resp.result);
       }));
@@ -267,8 +269,9 @@ function getBlockNumberTask(): Listr.ListrTask {
     },
     task: async ctx => {
       const node = ctx.aliveNodes[0];
-      const blockNumResp = await rp.post(`http://${node.address}`,
-                                         buildJSONRPCRequestPayload('eth_blockNumber', []));
+      const blockNumResp =
+        await rp.post(`http://${node.address}`,
+                      buildJSONRPCRequestPayload('eth_blockNumber', []));
       ctx.blockNumber = new BigNumber(blockNumResp.result);
     },
   };
@@ -289,8 +292,9 @@ function getProtocolVersionTask(): Listr.ListrTask {
     },
     task: async ctx => {
       const node = ctx.aliveNodes[0];
-      const protocolVersionResp = await rp.post(`http://${node.address}`,
-                                                buildJSONRPCRequestPayload('eth_protocolVersion', []));
+      const protocolVersionResp =
+        await rp.post(`http://${node.address}`,
+                      buildJSONRPCRequestPayload('eth_protocolVersion', []));
       ctx.protocolVersion = new BigNumber(protocolVersionResp.result);
     },
   };

@@ -44,7 +44,7 @@ test.serial('status should return expected results', async t => {
   const networkStatus = await status.cli('local', true);
 
   t.is(networkStatus.environment, 'local');
-  t.is(networkStatus.projConfig.project, 'status-test-project');
+  t.is(networkStatus.config.project, 'status-test-project');
   t.is(networkStatus.blockNumber.toString(),
        new BigNumber(EXPECTED_BLOCK_NUMBER).toString());
   t.is(networkStatus.protocolVersion.toString(),
