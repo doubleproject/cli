@@ -1,15 +1,8 @@
-import * as process from 'process';
-
 import test from 'ava';
-import * as fs from 'fs-extra';
 
 import * as start from '../../apis/start';
+import Config from '../../config';
 // import run, { DOWN, ENTER } from '../utils/inquirer';
-
-test.before(t => {
-  fs.copySync('data/tests/multi.yaml', 'start-test/double.yaml');
-  process.chdir('start-test');
-});
 
 test('should not be able to start invalid environment', t => {
   t.throws(() => {
@@ -19,7 +12,15 @@ test('should not be able to start invalid environment', t => {
 
 test('should not be able to start remote environment', t => {
   t.throws(() => {
-    start.cli('remote');
+    const cfg = Config.parseFromFile('data/tests/multi.yaml');
+    start.startForConfig(cfg, 'remote');
+  });
+});
+
+test('should fail for config without local environment', t => {
+  t.throws(() => {
+    const cfg = Config.parseFromFile('data/tests/remote.yaml');
+    start.startForConfig(cfg);
   });
 });
 
@@ -33,9 +34,4 @@ test('should not be able to start invalid chain', t => {
       chain: 'invalid', datadir: '', hosts: [],
     });
   });
-});
-
-test.after.always(t => {
-  process.chdir('..');
-  fs.removeSync('start-test');
 });

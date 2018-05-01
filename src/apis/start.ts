@@ -6,7 +6,20 @@ import { IEnvConfig, IProjectConfig } from '../config/schema';
 import { info } from '../lib/utils/shell';
 
 export function cli(env?: string) {
-  const cfg = Config.get();
+  startForConfig(Config.get(), env);
+}
+
+/**
+ * Starts a local environment.
+ *
+ * If env is not provided, displays a list of envs for the user to choose from
+ * if there are multiple stopped local envs, and if there's only one such env,
+ * it will be started.
+ *
+ * @param {IProjectConfig} cfg - The project configuration.
+ * @param {string} env - The environment to start.
+ */
+export function startForConfig(cfg: IProjectConfig, env?: string) {
   let envcfg: IEnvConfig;
 
   if (env) {
