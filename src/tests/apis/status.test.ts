@@ -1,7 +1,6 @@
 import { test } from 'ava';
 import { BigNumber } from 'bignumber.js';
 import * as fs from 'fs-extra';
-import * as rimraf from 'rimraf';
 
 import * as status from '../../apis/status';
 import { Monitor } from '../../monitor';
@@ -58,5 +57,5 @@ test.serial('status should return expected results', async t => {
 
 test.after('Removing status test directory', () => {
   process.chdir('..');
-  rimraf.sync('status-test');
+  fs.removeSync('status-test');
 });
