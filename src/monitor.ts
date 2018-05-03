@@ -11,6 +11,8 @@ import * as http from 'http';
 
 import * as bodyParser from 'body-parser';
 import * as express from 'express';
+import * as getPort from 'get-port';
+import * as _ from 'lodash';
 import * as readline from 'readline';
 import * as rp from 'request-promise';
 import * as winston from 'winston';
@@ -76,6 +78,57 @@ export interface IMonitoredNodeStatus {
 interface INetVersionResponse {
   id: number;
   result: string;
+}
+
+const K_MONITOR_START_PORT = 9545;
+const K_MONITOR_END_PORT   = 9644;
+
+/**
+ * Scans the ports and returns the first available port between 9545 and
+ * 9644. If no port is available within this range, throws exception.
+ */
+export async function getFirstAvailablePortForMonitor(): Promise<number> {
+  const port = await getPort({ port: K_MONITOR_START_PORT });
+  if (port > K_MONITOR_END_PORT) {
+    throw new Error('No available port for monitor');
+  }
+  return port;
+}
+
+/**
+ * Scans all ports in the range [start, end) concurrently, if any one of the
+ * port resembles a monitor process, return that port number. If none of them
+ * looks like a monitor, throws exception.
+ */
+async function scanPort(port: number): Promise<number> {
+  const response = await rp.get(`http://localhost:${port}/status`, { resolveWithFullResponse: true });
+  if (response.headers.server === 'double-monitor') {
+    return port;
+  }
+  throw new Error(`${port} is not a double monitor port.`);
+}
+
+/**
+ * Scans the ports between 9545 and 9644, and returns the first port where a
+ * monitor process is listening.
+ */
+export async function scanForMonitor(): Promise<number> {
+  const portRange = _.range(K_MONITOR_START_PORT, K_MONITOR_END_PORT);
+  for (const port of portRange) {
+    try {
+      const confirmedPort =
+        await Promise.race([scanPort(port),
+                            new Promise<number>((resolve, reject) => setTimeout(
+                              () => { reject(new Error('Scan timed out')); },
+                              1000)),
+                           ]);
+      return confirmedPort;
+    } catch (e) {
+      // Just suppress the exception.
+    }
+  }
+
+  throw new Error('Cannot find a double monitor process running');
 }
 
 /**
@@ -248,6 +301,12 @@ export class Monitor {
   }
 
   private setupRouting() {
+    // Set a server header to identify the monitor itself.
+    this.app.use((req, resp, next) => {
+      resp.setHeader('Server', 'double-monitor');
+      next();
+    });
+
     // GET /status returns the current status of all known instances.
     this.app.get('/status', (req, res) => {
       res.send(this.nodeStatuses);

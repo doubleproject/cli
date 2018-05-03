@@ -4,7 +4,10 @@ import * as winston from 'winston';
 import { test } from 'ava';
 import * as rp from 'request-promise';
 import * as rimraf from 'rimraf';
-import { IMonitoredNodeStatus, Monitor } from '../monitor';
+import { getFirstAvailablePortForMonitor,
+         IMonitoredNodeStatus,
+         Monitor,
+         scanForMonitor } from '../monitor';
 import { MockGeth } from './utils/geth';
 
 let port = 8080;
@@ -220,4 +223,29 @@ test.serial('monitor should reject invalid constructor parameters', async t => {
     const monitor = new Monitor([], 'testconfig.jl', 5000, -2);
     monitor.stop();
   });
+});
+
+test.serial('scan should return proper port number for running monitor process', async t => {
+  const monitor = new Monitor([], 'testconfig.jl', 1000, 3);
+  await monitor.start(9640);
+
+  await new Promise<void>(resolve => {
+    setTimeout(() => resolve(), 1000);
+  });
+
+  const foundPort = await scanForMonitor();
+  t.is(foundPort, 9640);
+
+  await monitor.stop();
+});
+
+test.serial('scan should throw if no monitor is running', async t => {
+  await t.throws(async () => {
+    await scanForMonitor();
+  });
+});
+
+test.serial('get first available monitor port should return a port in range', async t => {
+  const availablePort = await getFirstAvailablePortForMonitor();
+  t.is(availablePort >= 9545 && availablePort < 9644, true);
 });
