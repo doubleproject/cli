@@ -101,11 +101,6 @@
     "project": {
       "description": "Name of the project",
       "type": "string"
-    },
-    "monitorPort": {
-      "description": "The port on which the monitor is listening, defaults to 8080",
-      "type": "number",
-      "default": 8080
     }
   },
   "required": [

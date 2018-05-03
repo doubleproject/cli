@@ -5,7 +5,7 @@ import { table } from 'table';
 
 import Config from '../config';
 import { IProjectConfig } from '../config/schema';
-import { IMonitoredNodeStatus } from '../monitor';
+import { IMonitoredNodeStatus, scanForMonitor } from '../monitor';
 
 function buildJSONRPCRequestPayload(method: string, params: string[]): any {
   return {
@@ -67,6 +67,7 @@ export async function cli(env: string, suppressLogging?: boolean): Promise<IProj
 
   const tasks = new Listr([
     getProjectConfigTask(env),
+    getMonitorPortTask(),
     getAliveNodesTask(),
     getExistingAccountsTask(),
     getBalancesTask(),
@@ -87,6 +88,20 @@ export async function cli(env: string, suppressLogging?: boolean): Promise<IProj
     console.log(renderTable(status));
   }
   return status;
+}
+
+/**
+ * Scan for a double monitor process on the local machine. Sets the
+ * `monitorPort` property on the context.
+ */
+function getMonitorPortTask(): Listr.ListrTask {
+  return {
+    title: 'Scanning for Double monitor process',
+    task: async ctx => {
+      const monitorPort = await scanForMonitor();
+      ctx.monitorPort = monitorPort;
+    },
+  };
 }
 
 /**
@@ -164,14 +179,13 @@ function getAliveNodesTask(): Listr.ListrTask {
   return {
     title: 'Getting network information',
     skip: ctx => {
-      const config = ctx.config;
-      if (typeof config.monitorPort === 'undefined') {
+      if (typeof ctx.monitorPort === 'undefined') {
         throw new Error('Double monitor port is not specified!');
       }
     },
     task: async ctx => {
       const config = ctx.config;
-      const nodeStatuses = await rp.get(`http://localhost:${config.monitorPort}/status`);
+      const nodeStatuses = await rp.get(`http://localhost:${ctx.monitorPort}/status`);
       const nodeStatusesJSON = JSON.parse(nodeStatuses) as IMonitoredNodeStatus[];
       const aliveNodes = nodeStatusesJSON.filter(node => node.alive);
 

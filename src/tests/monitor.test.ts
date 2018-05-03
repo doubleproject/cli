@@ -3,7 +3,6 @@ import * as winston from 'winston';
 
 import { test } from 'ava';
 import * as rp from 'request-promise';
-import * as rimraf from 'rimraf';
 import { getFirstAvailablePortForMonitor,
          IMonitoredNodeStatus,
          Monitor,
@@ -84,10 +83,10 @@ test.afterEach.always('Shutting down servers...', async t => {
     context.server2.stop(),
     context.monitor.stop()]);
 
-  rimraf.sync('server1');
-  rimraf.sync('server2');
+  fs.removeSync('server1');
+  fs.removeSync('server2');
 
-  rimraf.sync('testconfig.jl');
+  fs.removeSync('testconfig.jl');
 });
 
 test.serial('monitor should report alive for both servers', async t => {
@@ -176,7 +175,7 @@ test.serial('monitor /add request should add a monitored instance', async t => {
   const configData = await fs.readFile('testconfig.jl');
   t.is(configData.includes('localhost:9000'), true);
 
-  rimraf.sync('addedServer');
+  fs.removeSync('addedServer');
 });
 
 test.serial(

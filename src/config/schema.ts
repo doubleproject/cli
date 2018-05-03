@@ -81,7 +81,4 @@ export interface IProjectConfig {
 
   /** Environments. */
   envs: IEnvs;
-
-  /** The port on which the monitor is listening, defaults to 8080 */
-  monitorPort?: number;
 }

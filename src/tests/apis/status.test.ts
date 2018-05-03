@@ -3,8 +3,14 @@ import { BigNumber } from 'bignumber.js';
 import * as fs from 'fs-extra';
 
 import * as status from '../../apis/status';
-import { Monitor } from '../../monitor';
-import { EXPECTED_BALANCES, EXPECTED_BLOCK_NUMBER, EXPECTED_PROTOCOL_VERSION, MockGeth } from '../utils/geth';
+import { getFirstAvailablePortForMonitor,
+         Monitor,
+       } from '../../monitor';
+import { EXPECTED_BALANCES,
+         EXPECTED_BLOCK_NUMBER,
+         EXPECTED_PROTOCOL_VERSION,
+         MockGeth,
+       } from '../utils/geth';
 
 test.before('Setting up status test directory', () => {
   fs.copySync('data/tests/status.yaml', 'status-test/double.yaml');
@@ -32,13 +38,11 @@ test.serial('status should return expected results', async t => {
   const geth1 = new MockGeth('999');
   const geth2 = new MockGeth('999');
 
-  monitor.start(9090);
-  geth1.start(9485);
-  geth2.start(9486);
+  const availableMonitorPort = await getFirstAvailablePortForMonitor();
 
-  await new Promise<void>(resolve => {
-    setTimeout(() => resolve(), 1000);
-  });
+  await monitor.start(availableMonitorPort);
+  await geth1.start(9485);
+  await geth2.start(9486);
 
   const networkStatus = await status.cli('local', true);
 
