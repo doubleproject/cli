@@ -62,7 +62,7 @@ export default class Geth {
    * @returns {ISpawnInput} The start script.
    */
   public static startScript(flags: IGethFlags): ISpawnInput {
-    const options = ['console'];
+    const options = [];
 
     if (flags.nodiscover) {
       options.push('--nodiscover');

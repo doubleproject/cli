@@ -1,5 +1,6 @@
 {
   "exclude": [
+    "data/tests/*.js",
     "src/tests/**/*.ts"
   ]
 }

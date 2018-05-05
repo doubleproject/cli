@@ -2,7 +2,9 @@ import * as path from 'path';
 
 import * as fs from 'fs-extra';
 
+import { IEnvConfig } from '../../config/schema';
 import { ETHEREUM_PROJECT_GENESIS } from '../../data';
+import { execute } from '../../lib/utils/shell';
 import Geth from './geth';
 
 /**
@@ -33,5 +35,24 @@ export function clean(datadir: string, backend: string) {
     Geth.clean(datadir);
   } else {
     throw new Error(`Unsupported Ethereum backend ${backend}`);
+  }
+}
+
+/**
+ * Starts a local backend.
+ *
+ * @param {IEnvConfig} config - The environment configuration.
+ */
+export function start(config: IEnvConfig) {
+  if (config.backend === 'geth') {
+    const script = Geth.startScript({
+      datadir: config.datadir,
+      nodiscover: true,
+      rpc: true,
+      networkid: config.networkID,
+    });
+    execute(script, path.join(config.datadir, 'geth.log'));
+  } else {
+    throw new Error(`Unsupported Ethereum backend ${config.backend}`);
   }
 }

@@ -1,0 +1,9 @@
+project: config-test
+chain: ethereum
+backend: geth
+envs:
+  remote:
+    networkID: 999
+    datadir: remote
+    hosts:
+      - 127.0.0.1:30303

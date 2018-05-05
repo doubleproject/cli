@@ -29,7 +29,6 @@ test('start script should contain correct flags', t => {
   t.deepEqual(Geth.startScript(flags), {
     command: 'geth',
     options: [
-      'console',
       '--nodiscover', '--maxpeers', '10', '--port', '30304', '--identity',
       'double', '--datadir', 'double-data', '--networkid', '1',
       '--rpc', '--rpcaddr', '0.0.0.0', '--rpcport', '8546', '--rpcapi',
@@ -41,7 +40,7 @@ test('start script should contain correct flags', t => {
 test('start script without flags should be correct', t => {
   t.deepEqual(Geth.startScript({}), {
     command: 'geth',
-    options: ['console'],
+    options: [],
   });
 });
 
@@ -55,8 +54,6 @@ test('start script should ignore RPC flags if RPC is not enabled', t => {
   };
   t.deepEqual(Geth.startScript(flags), {
     command: 'geth',
-    options: [
-      'console', '--nodiscover', '--port', '30304', '--identity', 'boson',
-    ],
+    options: ['--nodiscover', '--port', '30304', '--identity', 'boson'],
   });
 });

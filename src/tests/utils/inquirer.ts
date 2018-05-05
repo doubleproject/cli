@@ -25,3 +25,7 @@ export default function(args: string[], combo: string[]) {
     }));
   });
 }
+
+export const DOWN = '\x1B\x5B\x42';
+export const UP = '\x1B\x5B\x41';
+export const ENTER = '\x0D';
