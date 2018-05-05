@@ -56,10 +56,3 @@ export function start(config: IEnvConfig) {
     throw new Error(`Unsupported Ethereum backend ${config.backend}`);
   }
 }
-
-/**
- * Stops a local backend.
- */
-export function stop(config: IEnvConfig) {
-  console.log('stop');
-}

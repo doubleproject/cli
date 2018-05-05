@@ -42,20 +42,6 @@ program
   });
 
 program
-  .command('stop [env]')
-  .description('Stop a local environment')
-  .action(() => {
-    console.log('stop');
-  });
-
-program
-  .command('restart [env]')
-  .description('Restart a local environment')
-  .action(() => {
-    console.log('restart');
-  });
-
-program
   .command('status')
   .description('Get system and project status')
   .action(() => {
