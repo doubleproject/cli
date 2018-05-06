@@ -65,6 +65,9 @@
   "bugs": {
     "url": "https://github.com/doubleproject/double-cli/issues"
   },
+  "nyc": {
+    "exclude": ["*/tests"]
+  },
   "keywords": [
     "cli",
     "cli-app",
