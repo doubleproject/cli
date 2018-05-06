@@ -7,7 +7,8 @@ import { createGenesis } from '../backend/ethereum';
 import Geth from '../backend/ethereum/geth';
 import Config from '../config';
 import { IEnvConfig } from '../config/schema';
-import { error, executeSync } from '../lib/utils/shell';
+import { error } from '../lib/utils/logging';
+import { executeSync } from '../lib/utils/shell';
 
 function localSetupTask(name: string, config: IEnvConfig): Listr.ListrTask {
   return {

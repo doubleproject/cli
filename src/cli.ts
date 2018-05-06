@@ -3,7 +3,8 @@
 import * as program from 'commander';
 import { version } from 'pjson';
 
-import { executeSync, info } from './lib/utils/shell';
+import { info } from './lib/utils/logging';
+import { executeSync } from './lib/utils/shell';
 
 import * as clean from './apis/clean';
 import * as init from './apis/init';

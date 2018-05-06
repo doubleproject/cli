@@ -3,7 +3,7 @@ import * as inquirer from 'inquirer';
 import * as ethereum from '../backend/ethereum';
 import Config from '../config';
 import { IEnvConfig, IProjectConfig } from '../config/schema';
-import { info } from '../lib/utils/shell';
+import { info } from '../lib/utils/logging';
 
 export function cli(env?: string) {
   startForConfig(Config.get(), env);
