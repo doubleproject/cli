@@ -1,15 +1,19 @@
 #!/usr/bin/env node
 
 import * as program from 'commander';
+import * as fs from 'fs-extra';
+import * as os from 'os';
+import * as path from 'path';
 import { version } from 'pjson';
 
 import { info } from './lib/utils/logging';
-import { executeSync } from './lib/utils/shell';
+import { execute, executeSync } from './lib/utils/shell';
 
 import * as clean from './apis/clean';
 import * as init from './apis/init';
 import * as start from './apis/start';
 import * as status from './apis/status';
+import { getFirstAvailablePortForMonitor, scanForMonitor } from './monitor';
 
 program.version(version);
 
@@ -38,8 +42,24 @@ program
 program
   .command('start [env]')
   .description('Start a local environment')
-  .action(() => {
+  .action(async () => {
     start.cli();
+
+    try {
+      // Check if monitor is already running.
+      await scanForMonitor();
+    } catch (err) {
+      const port = await getFirstAvailablePortForMonitor();
+      const monitorConfigFile = path.join(os.homedir(), '.double', 'monitor.jl');
+      const monitorLog = path.join(os.homedir(), '.double', 'monitor.log');
+      const monitorStdoutStderrLog = path.join(os.homedir(), '.double', 'monitor-stdout-stderr.log');
+      fs.ensureFileSync(monitorConfigFile);
+      fs.ensureFileSync(monitorLog);
+      execute({
+        command: 'node',
+        options: ['dist/monitor.js', `${port}`, monitorConfigFile, monitorLog],
+      }, monitorStdoutStderrLog);
+    }
   });
 
 program
