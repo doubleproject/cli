@@ -24,6 +24,16 @@ interface IMonitoredNodeConfig {
   address: string;
 
   /**
+   * The project this node belongs to.
+   */
+  project: string;
+
+  /**
+   * The environment this node belongs to.
+   */
+  environment: string;
+
+  /**
    * A command that can be used to start/restart the node.  If `undefined`, the
    * the monitor will not try to restart the node.
    */
@@ -41,6 +51,14 @@ interface IMonitoredNodeConfig {
 function validateMonitoredNodeConfig(data: any): IMonitoredNodeConfig {
   if (typeof(data.address) !== 'string') {
     throw new Error('address is not a string');
+  }
+
+  if (typeof(data.project) !== 'string') {
+    throw new Error('project is not a string');
+  }
+
+  if (typeof(data.environment) !== 'string') {
+    throw new Error('environment is not a string');
   }
 
   if (data.reviveCmd &&
@@ -69,6 +87,8 @@ export interface IMonitoredNodeStatus {
   networkId?: string;
   reviveCmd?: string;
   reviveArgs?: string[];
+  project: string;
+  environment: string;
 }
 
 /**
@@ -271,6 +291,8 @@ export class Monitor {
       lastUpdate: new Date(),
       lastResponseId: 0,
       failureCount: 0,
+      project: config.project,
+      environment: config.environment,
     };
 
     if (typeof config.reviveCmd !== 'undefined') {
@@ -308,8 +330,19 @@ export class Monitor {
     });
 
     // GET /status returns the current status of all known instances.
-    this.app.get('/status', (req, res) => {
-      res.send(this.nodeStatuses);
+    this.app.get('/status/:project?/:environment?', (req, res) => {
+      const proj = req.params.project;
+      const env  = req.params.environment;
+
+      let results = this.nodeStatuses;
+      if (typeof(proj) !== 'undefined') {
+        results = results.filter(node => node.project === proj);
+      }
+      if (proj && typeof(env) !== 'undefined') {
+        results = results.filter(node => node.environment === env);
+      }
+
+      res.send(results);
     });
 
     // Parse all request body as JSON, ignoring content-type, for the /add

@@ -42,11 +42,15 @@ test.beforeEach('Starting servers...', async t => {
       address: `localhost:${port1}`,
       reviveCmd: 'touch',
       reviveArgs: 'server1',
+      project: 'monitor-test',
+      environment: 'local',
     },
     {
       address: `localhost:${port2}`,
       reviveCmd: 'touch',
       reviveArgs: 'server2',
+      project: 'monitor-test',
+      environment: 'local',
     },
   ];
 
@@ -144,6 +148,8 @@ test.serial('monitor /add request should add a monitored instance', async t => {
           address: 'localhost:9000',
           reviveCmd: 'touch',
           reviveArgs: 'addedServer',
+          project: 'monitor-test',
+          environment: 'remote',
         },
       ],
     },
@@ -247,4 +253,90 @@ test.serial('scan should throw if no monitor is running', async t => {
 test.serial('get first available monitor port should return a port in range', async t => {
   const availablePort = await getFirstAvailablePortForMonitor();
   t.is(availablePort >= 9545 && availablePort < 9644, true);
+});
+
+test.serial('monitor should return nodes with matching projects', async t => {
+  const context = t.context as ITestContext;
+
+  const proj1Node = {
+    address: 'localhost:9000',
+    project: 'proj1',
+    environment: 'local',
+  };
+
+  const proj2Node = {
+    address: 'localhost:9001',
+    project: 'proj2',
+    environment: 'local',
+  };
+
+  await rp.post({
+    url: `http://localhost:${context.monitorPort}/add`,
+    json: {
+      nodes: [
+        proj1Node,
+        proj2Node,
+      ],
+    },
+  });
+
+  await new Promise<void>(resolve => {
+    setTimeout(() => resolve(), K_HEARTBEAT_INTERVAL * (K_FAILURE_TOLERANCE + 1));
+  });
+
+  const body1 = await rp.get({
+    url: `http://localhost:${context.monitorPort}/status/proj1`,
+  });
+  const status1 = JSON.parse(body1) as IMonitoredNodeStatus[];
+  t.is(status1[0].address, 'localhost:9000');
+
+  const body2 = await rp.get({
+    url: `http://localhost:${context.monitorPort}/status/proj2`,
+  });
+  const status2 = JSON.parse(body2) as IMonitoredNodeStatus[];
+  t.is(status2[0].address, 'localhost:9001');
+});
+
+test.serial('monitor should return nodes with matching environments', async t => {
+  const context = t.context as ITestContext;
+
+  const proj1Node = {
+    address: 'localhost:9000',
+    project: 'proj',
+    environment: 'local',
+  };
+
+  const proj2Node = {
+    address: 'localhost:9001',
+    project: 'proj',
+    environment: 'remote',
+  };
+
+  await rp.post({
+    url: `http://localhost:${context.monitorPort}/add`,
+    json: {
+      nodes: [
+        proj1Node,
+        proj2Node,
+      ],
+    },
+  });
+
+  await new Promise<void>(resolve => {
+    setTimeout(() => resolve(), K_HEARTBEAT_INTERVAL * (K_FAILURE_TOLERANCE + 1));
+  });
+
+  const body1 = await rp.get({
+    url: `http://localhost:${context.monitorPort}/status/proj/local`,
+  });
+  const status1 = JSON.parse(body1) as IMonitoredNodeStatus[];
+  t.is(status1[0].address, 'localhost:9000');
+  t.is(status1.length, 1);
+
+  const body2 = await rp.get({
+    url: `http://localhost:${context.monitorPort}/status/proj/remote`,
+  });
+  const status2 = JSON.parse(body2) as IMonitoredNodeStatus[];
+  t.is(status2[0].address, 'localhost:9001');
+  t.is(status2.length, 1);
 });

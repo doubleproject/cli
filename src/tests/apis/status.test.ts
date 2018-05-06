@@ -31,8 +31,8 @@ test.serial('checking status without monitor should fail', async t => {
 
 test.serial('status should return expected results', async t => {
   const monitor = new Monitor([
-    {address: 'localhost:9485'},
-    {address: 'localhost:9486'},
+    {address: 'localhost:9485', project: 'test-proj', environment: 'local'},
+    {address: 'localhost:9486', project: 'test-proj', environment: 'local'},
   ], 'monitor.jl');
 
   const geth1 = new MockGeth('999');
