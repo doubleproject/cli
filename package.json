@@ -6,7 +6,7 @@
     "watch": "tsc -w",
     "build": "tsc",
     "lint": "tslint",
-    "test": "rimraf dist && tsc && tslint -c tslint.json -p tsconfig.json && SILENT_MODE=true nyc ava",
+    "test": "rimraf dist && tsc && tslint -c tslint.json -p tsconfig.json && cross-env SILENT_MODE=true nyc ava",
     "clean": "rimraf dist",
     "coveralls": "nyc report --reporter=text-lcov | coveralls"
   },
@@ -51,6 +51,7 @@
     "ava": "^1.0.0-beta.3",
     "concat-stream": "^1.6.2",
     "coveralls": "^3.0.1",
+    "cross-env": "^5.1.4",
     "nyc": "^11.7.1",
     "rimraf": "^2.6.2",
     "sinon": "^5.0.4",
