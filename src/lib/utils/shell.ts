@@ -2,7 +2,6 @@ import {
   ChildProcess, spawn, spawnSync, SpawnSyncReturns,
 } from 'child_process';
 
-import chalk from 'chalk';
 import * as fs from 'fs-extra';
 
 export interface ISpawnInput {
@@ -36,12 +35,4 @@ export function execute(input: ISpawnInput, logFile: string): ChildProcess {
   });
   cp.unref();
   return cp;
-}
-
-export function info(message: string) {
-  console.log(chalk.cyan(' INFO ') + message);
-}
-
-export function error(message: string) {
-  console.log(chalk.red(' ERROR ') + message);
 }

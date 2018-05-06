@@ -2,7 +2,7 @@ import * as inquirer from 'inquirer';
 
 import * as ethereum from '../backend/ethereum';
 import Config from '../config';
-import { info } from '../lib/utils/shell';
+import { info } from '../lib/utils/logging';
 
 /**
  * CLI entrypoint for cleaning a project or environment.
