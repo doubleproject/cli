@@ -1,10 +1,12 @@
 import * as path from 'path';
 
 import * as fs from 'fs-extra';
+import * as keythereum from 'keythereum';
 
 import { IEnvConfig } from '../../config/schema';
 import { ETHEREUM_PROJECT_GENESIS } from '../../data';
 import { untildify } from '../../lib/utils/compat';
+import { executeSync } from '../../lib/utils/shell';
 import { execute } from '../../lib/utils/shell';
 
 import Geth from './geth';
@@ -26,15 +28,31 @@ export function createGenesis(folder: string) {
 export function createAccounts(
   datadir: string, backend: string, count?: number,
 ) {
-  datadir = untildify(datadir);
+  const keystore = path.join(untildify(datadir), 'keystore');
 
-  let accounts = {};
-  const manifest = path.join(datadir, 'accounts.json');
-  if (fs.existsSync(manifest)) {
-    accounts = {};
-  }
+  // let accounts = {};
+  // const manifest = path.join(datadir, 'accounts.json');
+  // if (fs.existsSync(manifest)) {
+  //   accounts = {};
+  // }
 
   count = count || 10;
+  for (let i = 0; i < count; i++) {
+    const dk = keythereum.create();
+    const key = keythereum.dump('double', dk.privateKey, dk.salt, dk.iv);
+    keythereum.exportToFile(key, keystore);
+    // accounts[i] = key.address;
+  }
+}
+
+export function init(datadir: string, backend: string): boolean {
+  datadir = untildify(datadir);
+  if (backend === 'geth') {
+    const command = Geth.initScript(datadir);
+    return executeSync(command).status === 0;
+  } else {
+    throw new Error(`Unsupported Ethereum backend ${backend}`);
+  }
 }
 
 /**
@@ -61,8 +79,8 @@ export function clean(datadir: string, backend: string) {
  * @param {IEnvConfig} config - The environment configuration.
  */
 export function start(config: IEnvConfig) {
+  const datadir = untildify(config.datadir);
   if (config.backend === 'geth') {
-    const datadir = untildify(config.datadir);
     const script = Geth.startScript({
       datadir,
       nodiscover: true,
