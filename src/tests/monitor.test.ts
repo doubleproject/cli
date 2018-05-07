@@ -1,9 +1,13 @@
 import * as fs from 'fs-extra';
+import * as winston from 'winston';
 
 import { test } from 'ava';
 import * as rp from 'request-promise';
-import * as rimraf from 'rimraf';
-import { IMonitoredNodeStatus, Monitor } from '../monitor';
+import { addToMonitor,
+         getFirstAvailablePortForMonitor,
+         IMonitoredNodeStatus,
+         Monitor,
+         scanForMonitor } from '../monitor';
 import { MockGeth } from './utils/geth';
 
 let port = 8080;
@@ -20,6 +24,12 @@ interface ITestContext {
   monitorPort: number;
 }
 
+test.before('Configuring test logger...', () => {
+  winston.configure({
+    level: 'error',
+  });
+});
+
 test.beforeEach('Starting servers...', async t => {
   const mockServer1 = new MockGeth('999');
   const mockServer2 = new MockGeth('999');
@@ -33,11 +43,15 @@ test.beforeEach('Starting servers...', async t => {
       address: `localhost:${port1}`,
       reviveCmd: 'touch',
       reviveArgs: 'server1',
+      project: 'monitor-test',
+      environment: 'local',
     },
     {
       address: `localhost:${port2}`,
       reviveCmd: 'touch',
       reviveArgs: 'server2',
+      project: 'monitor-test',
+      environment: 'local',
     },
   ];
 
@@ -74,10 +88,10 @@ test.afterEach.always('Shutting down servers...', async t => {
     context.server2.stop(),
     context.monitor.stop()]);
 
-  rimraf.sync('server1');
-  rimraf.sync('server2');
+  fs.removeSync('server1');
+  fs.removeSync('server2');
 
-  rimraf.sync('testconfig.jl');
+  fs.removeSync('testconfig.jl');
 });
 
 test.serial('monitor should report alive for both servers', async t => {
@@ -135,6 +149,8 @@ test.serial('monitor /add request should add a monitored instance', async t => {
           address: 'localhost:9000',
           reviveCmd: 'touch',
           reviveArgs: 'addedServer',
+          project: 'monitor-test',
+          environment: 'remote',
         },
       ],
     },
@@ -166,7 +182,7 @@ test.serial('monitor /add request should add a monitored instance', async t => {
   const configData = await fs.readFile('testconfig.jl');
   t.is(configData.includes('localhost:9000'), true);
 
-  rimraf.sync('addedServer');
+  fs.removeSync('addedServer');
 });
 
 test.serial(
@@ -213,4 +229,89 @@ test.serial('monitor should reject invalid constructor parameters', async t => {
     const monitor = new Monitor([], 'testconfig.jl', 5000, -2);
     monitor.stop();
   });
+});
+
+test.serial('scan should return proper port number for running monitor process', async t => {
+  const monitor = new Monitor([], 'monitor.jl');
+  await monitor.start(9600);
+  const foundPort = await scanForMonitor();
+  t.is(foundPort, 9600);
+  await monitor.stop();
+});
+
+test.serial('scan should throw if no monitor is running', async t => {
+  const context = t.context as ITestContext;
+
+  await context.monitor.stop();
+
+  await t.throws(async () => {
+    await scanForMonitor();
+  });
+});
+
+test.serial('get first available monitor port should return a port in range', async t => {
+  const availablePort = await getFirstAvailablePortForMonitor();
+  t.is(availablePort >= 9545 && availablePort < 9644, true);
+});
+
+test.serial('monitor should return nodes with matching projects', async t => {
+  const context = t.context as ITestContext;
+
+  const proj1Node = {
+    address: 'localhost:9000',
+    project: 'proj1',
+    environment: 'local',
+  };
+
+  const proj2Node = {
+    address: 'localhost:9001',
+    project: 'proj2',
+    environment: 'local',
+  };
+
+  await addToMonitor([proj1Node, proj2Node], context.monitorPort);
+
+  const body1 = await rp.get({
+    url: `http://localhost:${context.monitorPort}/status/proj1`,
+  });
+  const status1 = JSON.parse(body1) as IMonitoredNodeStatus[];
+  t.is(status1[0].address, 'localhost:9000');
+
+  const body2 = await rp.get({
+    url: `http://localhost:${context.monitorPort}/status/proj2`,
+  });
+  const status2 = JSON.parse(body2) as IMonitoredNodeStatus[];
+  t.is(status2[0].address, 'localhost:9001');
+});
+
+test.serial('monitor should return nodes with matching environments', async t => {
+  const context = t.context as ITestContext;
+
+  const proj1Node = {
+    address: 'localhost:9000',
+    project: 'proj',
+    environment: 'local',
+  };
+
+  const proj2Node = {
+    address: 'localhost:9001',
+    project: 'proj',
+    environment: 'remote',
+  };
+
+  await addToMonitor([proj1Node, proj2Node], context.monitorPort);
+
+  const body1 = await rp.get({
+    url: `http://localhost:${context.monitorPort}/status/proj/local`,
+  });
+  const status1 = JSON.parse(body1) as IMonitoredNodeStatus[];
+  t.is(status1[0].address, 'localhost:9000');
+  t.is(status1.length, 1);
+
+  const body2 = await rp.get({
+    url: `http://localhost:${context.monitorPort}/status/proj/remote`,
+  });
+  const status2 = JSON.parse(body2) as IMonitoredNodeStatus[];
+  t.is(status2[0].address, 'localhost:9001');
+  t.is(status2.length, 1);
 });

@@ -1,3 +1,16 @@
+export interface INodeConfig {
+  /** Host IP address */
+  host: string;
+
+  /** Protocol port */
+  port: number;
+
+  /** JSON-RPC server port */
+  rpcPort?: number;
+}
+
+type StringOrINodeConfig = string | INodeConfig;
+
 export interface IEnvConfig {
   /** Name of the chain. Default is ethereum. */
   chain?: string;
@@ -21,7 +34,7 @@ export interface IEnvConfig {
    *
    * @minItems 1
    */
-  hosts: string[];
+  hosts: StringOrINodeConfig[];
 
   /** Backend to use for local nodes. Default is geth. */
   backend?: string;
