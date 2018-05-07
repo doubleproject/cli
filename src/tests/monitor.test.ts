@@ -10,7 +10,7 @@ import { addToMonitor,
          scanForMonitor } from '../monitor';
 import { MockGeth } from './utils/geth';
 
-let port = 9545;
+let port = 8080;
 const K_HEARTBEAT_INTERVAL = 1000;
 const K_FAILURE_TOLERANCE = 5;
 
@@ -232,8 +232,11 @@ test.serial('monitor should reject invalid constructor parameters', async t => {
 });
 
 test.serial('scan should return proper port number for running monitor process', async t => {
+  const monitor = new Monitor([], 'monitor.jl');
+  await monitor.start(9600);
   const foundPort = await scanForMonitor();
-  t.is(9545 <= foundPort && foundPort < 9644, true);
+  t.is(foundPort, 9600);
+  await monitor.stop();
 });
 
 test.serial('scan should throw if no monitor is running', async t => {
@@ -266,7 +269,7 @@ test.serial('monitor should return nodes with matching projects', async t => {
     environment: 'local',
   };
 
-  await addToMonitor([proj1Node, proj2Node]);
+  await addToMonitor([proj1Node, proj2Node], context.monitorPort);
 
   const body1 = await rp.get({
     url: `http://localhost:${context.monitorPort}/status/proj1`,
@@ -296,7 +299,7 @@ test.serial('monitor should return nodes with matching environments', async t =>
     environment: 'remote',
   };
 
-  await addToMonitor([proj1Node, proj2Node]);
+  await addToMonitor([proj1Node, proj2Node], context.monitorPort);
 
   const body1 = await rp.get({
     url: `http://localhost:${context.monitorPort}/status/proj/local`,

@@ -155,10 +155,15 @@ export async function scanForMonitor(): Promise<number> {
  * Add a node with the given configuration to the monitor watch list. Throws if
  * there is no monitor running.
  *
- * @param {IMonitoredNodeConfig} cfgs - The configuration used to watch this node with
+ * @param {IMonitoredNodeConfig[]} cfgs - The configuration used to watch this node with
+ * @param {number} port - Optional port at which the port is running, if this is
+ * specified, this method will not scan for monitor automatically
  */
-export async function addToMonitor(cfgs: IMonitoredNodeConfig[]): Promise<void> {
-  const port = await scanForMonitor();
+export async function addToMonitor(cfgs: IMonitoredNodeConfig[],
+                                   port?: number): Promise<void> {
+  if (typeof(port) === 'undefined') {
+    port = await scanForMonitor();
+  }
 
   await rp.post(`http://localhost:${port}/add`, {
     json: {
