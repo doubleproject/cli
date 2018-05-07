@@ -15,6 +15,7 @@ export default class Validator {
     this.ajv = new Ajv({
       allErrors: true,
       verbose: true,
+      useDefaults: true,
       meta: require('ajv/lib/refs/json-schema-draft-06.json'),
     });
     this.ajv.addSchema(Schema, 'project');
@@ -24,6 +25,11 @@ export default class Validator {
     const cfg = this.validate(config);
 
     cfg.chain = cfg.chain || 'ethereum';
+
+    if (!ALLOWED_BACKENDS.has(config.chain)) {
+      throw new Error(`Invalid chain ${cfg.chain}`);
+    }
+
     if (cfg.chain === 'ethereum' && !cfg.backend) {
       cfg.backend = 'geth';
     }

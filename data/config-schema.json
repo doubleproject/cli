@@ -1,13 +1,34 @@
 {
   "$schema": "http://json-schema.org/draft-06/schema#",
   "definitions": {
+    "INodeConfig": {
+      "description": "Detailed configuration of a node",
+      "properties": {
+        "host": {
+          "description": "Host IP address",
+          "type": "string"
+        },
+        "port": {
+          "description": "Protocol port",
+          "type": "number"
+        },
+        "rpcPort": {
+          "description": "JSON-RPC server port",
+          "type": "number"
+        }
+      },
+      "type": "object",
+      "required": [
+        "host",
+        "port"
+      ]
+    },
     "IEnvConfig": {
       "description": "Environment-specific configuration",
       "properties": {
         "backend": {
           "description": "Backend for a local network",
-          "type": "string",
-          "default": "geth"
+          "type": "string"
         },
         "chain": {
           "description": "Name of the chain",
@@ -25,7 +46,12 @@
         "hosts": {
           "description": "Host IP:port addresses, in that format",
           "items": {
-            "type": "string"
+            "oneOf": [
+              { "type": "string" },
+              {
+                "$ref": "#/definitions/INodeConfig"
+              }
+            ]
           },
           "minItems": 1,
           "type": "array"

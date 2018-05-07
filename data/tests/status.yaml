@@ -1,4 +1,6 @@
-project: config-test
+project: status-test-project
+chain: ethereum
+backend: geth
 envs:
   local:
     networkID: 999
@@ -6,6 +8,4 @@ envs:
     local: true
     hosts:
       - 127.0.0.1:30303
-      - host: 127.0.0.1
-        port: 30304
-        rpcPort: 8546
+      - 127.0.0.1:30304

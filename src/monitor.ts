@@ -11,15 +11,27 @@ import * as http from 'http';
 
 import * as bodyParser from 'body-parser';
 import * as express from 'express';
+import * as getPort from 'get-port';
+import * as _ from 'lodash';
 import * as readline from 'readline';
 import * as rp from 'request-promise';
 import * as winston from 'winston';
 
-interface IMonitoredNodeConfig {
+export interface IMonitoredNodeConfig {
   /**
    * The rpc address of the monitored node. In IP:port format.
    */
   address: string;
+
+  /**
+   * The project this node belongs to.
+   */
+  project: string;
+
+  /**
+   * The environment this node belongs to.
+   */
+  environment: string;
 
   /**
    * A command that can be used to start/restart the node.  If `undefined`, the
@@ -41,11 +53,21 @@ function validateMonitoredNodeConfig(data: any): IMonitoredNodeConfig {
     throw new Error('address is not a string');
   }
 
-  if (typeof(data.reviveCmd) !== 'string') {
+  if (typeof(data.project) !== 'string') {
+    throw new Error('project is not a string');
+  }
+
+  if (typeof(data.environment) !== 'string') {
+    throw new Error('environment is not a string');
+  }
+
+  if (data.reviveCmd &&
+      typeof(data.reviveCmd) !== 'string') {
     throw new Error('invalid reviveCmd field');
   }
 
-  if (typeof(data.reviveArgs) !== 'string') {
+  if (data.reviveArgs &&
+      typeof(data.reviveArgs) !== 'string') {
     throw new Error('invalid reviveArgs field');
   }
 
@@ -65,6 +87,8 @@ export interface IMonitoredNodeStatus {
   networkId?: string;
   reviveCmd?: string;
   reviveArgs?: string[];
+  project: string;
+  environment: string;
 }
 
 /**
@@ -74,6 +98,78 @@ export interface IMonitoredNodeStatus {
 interface INetVersionResponse {
   id: number;
   result: string;
+}
+
+const K_MONITOR_START_PORT = 9545;
+const K_MONITOR_END_PORT   = 9644;
+
+/**
+ * Scans the ports and returns the first available port between 9545 and
+ * 9644. If no port is available within this range, throws exception.
+ */
+export async function getFirstAvailablePortForMonitor(): Promise<number> {
+  const port = await getPort({ port: K_MONITOR_START_PORT });
+  if (port > K_MONITOR_END_PORT) {
+    throw new Error('No available port for monitor');
+  }
+  return port;
+}
+
+/**
+ * Scans all ports in the range [start, end) concurrently, if any one of the
+ * port resembles a monitor process, return that port number. If none of them
+ * looks like a monitor, throws exception.
+ */
+async function scanPort(port: number): Promise<number> {
+  const response = await rp.get(`http://localhost:${port}/status`, { resolveWithFullResponse: true });
+  if (response.headers.server === 'double-monitor') {
+    return port;
+  }
+  throw new Error(`${port} is not a double monitor port.`);
+}
+
+/**
+ * Scans the ports between 9545 and 9644, and returns the first port where a
+ * monitor process is listening.
+ */
+export async function scanForMonitor(): Promise<number> {
+  const portRange = _.range(K_MONITOR_START_PORT, K_MONITOR_END_PORT);
+  for (const port of portRange) {
+    try {
+      const confirmedPort =
+        await Promise.race([scanPort(port),
+                            new Promise<number>((resolve, reject) => setTimeout(
+                              () => { reject(new Error('Scan timed out')); },
+                              1000)),
+                           ]);
+      return confirmedPort;
+    } catch (e) {
+      // Just suppress the exception.
+    }
+  }
+
+  throw new Error('Cannot find a double monitor process running');
+}
+
+/**
+ * Add a node with the given configuration to the monitor watch list. Throws if
+ * there is no monitor running.
+ *
+ * @param {IMonitoredNodeConfig[]} cfgs - The configuration used to watch this node with
+ * @param {number} port - Optional port at which the port is running, if this is
+ * specified, this method will not scan for monitor automatically
+ */
+export async function addToMonitor(cfgs: IMonitoredNodeConfig[],
+                                   port?: number): Promise<void> {
+  if (typeof(port) === 'undefined') {
+    port = await scanForMonitor();
+  }
+
+  await rp.post(`http://localhost:${port}/add`, {
+    json: {
+      nodes: cfgs,
+    },
+  });
 }
 
 /**
@@ -216,6 +312,8 @@ export class Monitor {
       lastUpdate: new Date(),
       lastResponseId: 0,
       failureCount: 0,
+      project: config.project,
+      environment: config.environment,
     };
 
     if (typeof config.reviveCmd !== 'undefined') {
@@ -246,13 +344,28 @@ export class Monitor {
   }
 
   private setupRouting() {
-    // GET /status returns the current status of all known instances.
-    this.app.get('/status', (req, res) => {
-      res.send(this.nodeStatuses);
+    // Set a server header to identify the monitor itself.
+    this.app.use((req, resp, next) => {
+      resp.setHeader('Server', 'double-monitor');
+      next();
     });
 
-    // Parse all request body as JSON, ignoring content-type, for the /add
-    // route.
+    // GET /status returns the current status of all known instances.
+    this.app.get('/status/:project?/:environment?', (req, res) => {
+      const proj = req.params.project;
+      const env  = req.params.environment;
+
+      let results = this.nodeStatuses;
+      if (typeof(proj) !== 'undefined') {
+        results = results.filter(node => node.project === proj);
+      }
+      if (proj && typeof(env) !== 'undefined') {
+        results = results.filter(node => node.environment === env);
+      }
+
+      res.send(results);
+    });
+
     this.app.use('/add', bodyParser.json());
 
     // POST /add adds the provided instances to the monitored list. The POST
