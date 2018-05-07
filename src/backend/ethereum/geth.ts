@@ -115,4 +115,8 @@ export default class Geth {
 
     return {command: 'geth', options};
   }
+
+  public static createAccount(passphrase?: string) {
+    return;
+  }
 }
