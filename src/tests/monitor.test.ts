@@ -3,13 +3,14 @@ import * as winston from 'winston';
 
 import { test } from 'ava';
 import * as rp from 'request-promise';
-import { getFirstAvailablePortForMonitor,
+import { addToMonitor,
+         getFirstAvailablePortForMonitor,
          IMonitoredNodeStatus,
          Monitor,
          scanForMonitor } from '../monitor';
 import { MockGeth } from './utils/geth';
 
-let port = 8080;
+let port = 9545;
 const K_HEARTBEAT_INTERVAL = 1000;
 const K_FAILURE_TOLERANCE = 5;
 
@@ -231,20 +232,15 @@ test.serial('monitor should reject invalid constructor parameters', async t => {
 });
 
 test.serial('scan should return proper port number for running monitor process', async t => {
-  const monitor = new Monitor([], 'testconfig.jl', 1000, 3);
-  await monitor.start(9640);
-
-  await new Promise<void>(resolve => {
-    setTimeout(() => resolve(), 1000);
-  });
-
   const foundPort = await scanForMonitor();
-  t.is(foundPort, 9640);
-
-  await monitor.stop();
+  t.is(9545 <= foundPort && foundPort < 9644, true);
 });
 
 test.serial('scan should throw if no monitor is running', async t => {
+  const context = t.context as ITestContext;
+
+  await context.monitor.stop();
+
   await t.throws(async () => {
     await scanForMonitor();
   });
@@ -270,19 +266,7 @@ test.serial('monitor should return nodes with matching projects', async t => {
     environment: 'local',
   };
 
-  await rp.post({
-    url: `http://localhost:${context.monitorPort}/add`,
-    json: {
-      nodes: [
-        proj1Node,
-        proj2Node,
-      ],
-    },
-  });
-
-  await new Promise<void>(resolve => {
-    setTimeout(() => resolve(), K_HEARTBEAT_INTERVAL * (K_FAILURE_TOLERANCE + 1));
-  });
+  await addToMonitor([proj1Node, proj2Node]);
 
   const body1 = await rp.get({
     url: `http://localhost:${context.monitorPort}/status/proj1`,
@@ -312,19 +296,7 @@ test.serial('monitor should return nodes with matching environments', async t =>
     environment: 'remote',
   };
 
-  await rp.post({
-    url: `http://localhost:${context.monitorPort}/add`,
-    json: {
-      nodes: [
-        proj1Node,
-        proj2Node,
-      ],
-    },
-  });
-
-  await new Promise<void>(resolve => {
-    setTimeout(() => resolve(), K_HEARTBEAT_INTERVAL * (K_FAILURE_TOLERANCE + 1));
-  });
+  await addToMonitor([proj1Node, proj2Node]);
 
   const body1 = await rp.get({
     url: `http://localhost:${context.monitorPort}/status/proj/local`,

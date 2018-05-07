@@ -17,7 +17,7 @@ import * as readline from 'readline';
 import * as rp from 'request-promise';
 import * as winston from 'winston';
 
-interface IMonitoredNodeConfig {
+export interface IMonitoredNodeConfig {
   /**
    * The rpc address of the monitored node. In IP:port format.
    */
@@ -149,6 +149,22 @@ export async function scanForMonitor(): Promise<number> {
   }
 
   throw new Error('Cannot find a double monitor process running');
+}
+
+/**
+ * Add a node with the given configuration to the monitor watch list. Throws if
+ * there is no monitor running.
+ *
+ * @param {IMonitoredNodeConfig} cfgs - The configuration used to watch this node with
+ */
+export async function addToMonitor(cfgs: IMonitoredNodeConfig[]): Promise<void> {
+  const port = await scanForMonitor();
+
+  await rp.post(`http://localhost:${port}/add`, {
+    json: {
+      nodes: cfgs,
+    },
+  });
 }
 
 /**
@@ -345,8 +361,6 @@ export class Monitor {
       res.send(results);
     });
 
-    // Parse all request body as JSON, ignoring content-type, for the /add
-    // route.
     this.app.use('/add', bodyParser.json());
 
     // POST /add adds the provided instances to the monitored list. The POST
