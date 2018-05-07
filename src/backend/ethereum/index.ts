@@ -4,7 +4,9 @@ import * as fs from 'fs-extra';
 
 import { IEnvConfig } from '../../config/schema';
 import { ETHEREUM_PROJECT_GENESIS } from '../../data';
+import { untildify } from '../../lib/utils/compat';
 import { execute } from '../../lib/utils/shell';
+
 import Geth from './geth';
 
 /**
@@ -21,6 +23,20 @@ export function createGenesis(folder: string) {
   fs.copySync(ETHEREUM_PROJECT_GENESIS, file);
 }
 
+export function createAccounts(
+  datadir: string, backend: string, count?: number,
+) {
+  datadir = untildify(datadir);
+
+  let accounts = {};
+  const manifest = path.join(datadir, 'accounts.json');
+  if (fs.existsSync(manifest)) {
+    accounts = {};
+  }
+
+  count = count || 10;
+}
+
 /**
  * Cleans a data directory.
  *
@@ -31,6 +47,7 @@ export function createGenesis(folder: string) {
  * @param {string} backend - The backend used.
  */
 export function clean(datadir: string, backend: string) {
+  datadir = untildify(datadir);
   if (backend === 'geth') {
     Geth.clean(datadir);
   } else {
@@ -45,13 +62,14 @@ export function clean(datadir: string, backend: string) {
  */
 export function start(config: IEnvConfig) {
   if (config.backend === 'geth') {
+    const datadir = untildify(config.datadir);
     const script = Geth.startScript({
-      datadir: config.datadir,
+      datadir,
       nodiscover: true,
       rpc: true,
       networkid: config.networkID,
     });
-    execute(script, path.join(config.datadir, 'geth.log'));
+    execute(script, path.join(datadir, 'geth.log'));
   } else {
     throw new Error(`Unsupported Ethereum backend ${config.backend}`);
   }

@@ -2,6 +2,7 @@ import * as path from 'path';
 
 import * as fs from 'fs-extra';
 
+import { untildify } from '../../lib/utils/compat';
 import { ISpawnInput } from '../../lib/utils/shell';
 
 interface IGethFlags {
@@ -41,6 +42,7 @@ export default class Geth {
    * @returns {ISpawnInput} The initialization script.
    */
   public static initScript(datadir: string): ISpawnInput {
+    datadir = untildify(datadir);
     const genesis = path.join(datadir, 'genesis.json');
     return {command: 'geth', options: ['--datadir', datadir, 'init', genesis]};
   }
@@ -116,7 +118,18 @@ export default class Geth {
     return {command: 'geth', options};
   }
 
-  public static createAccount(passphrase?: string) {
+  /**
+   * Creates accounts with private keys.
+   *
+   * This does a few things.
+   *
+   * @param {string} datadir - The data directory to put the key files in.
+   * @param {number} count - The number of accounts to create.
+   * @param {string} pw - Passphrase to lock key files with. If not specified,
+   *    use "double".
+   */
+  public static createAccounts(datadir: string, count: number, pw?: string) {
+    pw = pw || 'double';
     return;
   }
 }
