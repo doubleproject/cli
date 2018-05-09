@@ -36,6 +36,9 @@ export interface IProjectStatus {
   /** The project configuration */
   config: IProjectConfig;
 
+  /** The nodes in this project */
+  nodes: IMonitoredNodeStatus[];
+
   /** The name of the environment configuration */
   environment: string;
 
@@ -79,6 +82,7 @@ export async function cli(env: string, suppressLogging?: boolean): Promise<IProj
   const status = {
     balances: taskContext.allBalances,
     config: taskContext.config,
+    nodes: taskContext.aliveNodes,
     environment: taskContext.env,
     blockNumber: taskContext.blockNumber,
     protocolVersion: taskContext.protocolVersion,
@@ -146,8 +150,8 @@ function renderTable(status: IProjectStatus): string {
   tableData.push(
     ['Mode', envConfig.local ? 'local' : 'remote', '']);
 
-  envConfig.hosts.forEach((host, idx) => {
-    tableData.push([`Node[${idx}]`, host, '']);
+  status.nodes.forEach((host, idx) => {
+    tableData.push([`Node[${idx}]`, host.address, host.lastUpdate]);
   });
 
   status.balances.forEach((acctBalance, idx) => {
@@ -185,16 +189,17 @@ function getAliveNodesTask(): Listr.ListrTask {
     },
     task: async ctx => {
       const config = ctx.config;
-      const nodeStatuses = await rp.get(`http://localhost:${ctx.monitorPort}/status`);
+      const statusUrl = `http://localhost:${ctx.monitorPort}/status/${config.project}/${ctx.env}`;
+      const nodeStatuses = await rp.get(statusUrl);
       const nodeStatusesJSON = JSON.parse(nodeStatuses) as IMonitoredNodeStatus[];
       const aliveNodes = nodeStatusesJSON.filter(node => node.alive);
 
       if (aliveNodes.length === 0) {
         if (config.envs[ctx.env].local) {
-          throw new Error('All local nodes are down, please run double start');
+          throw new Error('Local node is down, please run double start');
         }
 
-        throw new Error('All remote nodes are down, please double check if their addresses are correct');
+        throw new Error('Remote node is down, please double check if its address is correct');
       }
 
       ctx.aliveNodes = aliveNodes;

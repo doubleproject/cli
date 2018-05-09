@@ -42,7 +42,7 @@ test('should prompt user to choose from multiple environments', t => {
 test('should not be able to start invalid chain', t => {
   t.throws(() => {
     start.startSingle('invalid', {
-      chain: 'invalid', datadir: '', hosts: [],
+      chain: 'invalid', datadir: '', host: 'localhost:30303',
     });
   });
 });

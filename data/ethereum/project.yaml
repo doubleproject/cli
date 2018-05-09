@@ -7,5 +7,4 @@ envs:
     backend: geth
     datadir: double_data
     local: true
-    hosts:
-      - 127.0.0.1:30303
+    host: 127.0.0.1:30303

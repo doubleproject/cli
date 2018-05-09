@@ -55,9 +55,7 @@ test('should not be able to clean invalid backend', t => {
 
 test('should not be able to start invalid backend', t => {
   t.throws(() => {
-    eth.start('', {
-      chain: 'ethereum', backend: 'invalid', datadir: '', hosts: [],
-    });
+    eth.start({chain: 'ethereum', backend: 'invalid', datadir: '', host: 'localhost:30303'});
   });
 });
 

@@ -4,7 +4,7 @@
     "INodeConfig": {
       "description": "Detailed configuration of a node",
       "properties": {
-        "host": {
+        "ip": {
           "description": "Host IP address",
           "type": "string"
         },
@@ -19,7 +19,7 @@
       },
       "type": "object",
       "required": [
-        "host",
+        "ip",
         "port"
       ]
     },
@@ -43,18 +43,14 @@
           "description": "Gas price multiplier in Wei",
           "type": "number"
         },
-        "hosts": {
+        "host": {
           "description": "Host IP:port addresses, in that format",
-          "items": {
-            "oneOf": [
-              { "type": "string" },
-              {
-                "$ref": "#/definitions/INodeConfig"
-              }
-            ]
-          },
-          "minItems": 1,
-          "type": "array"
+          "oneOf": [
+            { "type": "string" },
+            {
+              "$ref": "#/definitions/INodeConfig"
+            }
+          ]
         },
         "local": {
           "description": "Whether the environment is for a local node",
@@ -76,7 +72,7 @@
       "type": "object",
       "required": [
         "datadir",
-        "hosts"
+        "host"
       ]
     }
   },

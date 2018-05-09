@@ -31,18 +31,15 @@ test.serial('checking status without monitor should fail', async t => {
 
 test.serial('status should return expected results', async t => {
   const monitor = new Monitor([
-    {address: 'localhost:9485', project: 'test-proj', environment: 'local'},
-    {address: 'localhost:9486', project: 'test-proj', environment: 'local'},
+    {address: 'localhost:9485', project: 'status-test-project', environment: 'local'},
   ], 'monitor.jl');
 
   const geth1 = new MockGeth('999');
-  const geth2 = new MockGeth('999');
 
   const availableMonitorPort = await getFirstAvailablePortForMonitor();
 
-  await monitor.start(availableMonitorPort);
   await geth1.start(9485);
-  await geth2.start(9486);
+  await monitor.start(availableMonitorPort);
 
   const networkStatus = await status.cli('local', true);
 

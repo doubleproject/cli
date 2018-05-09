@@ -2,6 +2,7 @@ import test from 'ava';
 import * as fs from 'fs-extra';
 
 import Config from '../../config';
+import { INodeConfig } from '../../config/schema';
 import { ETHEREUM_DEFAULT_CFG } from '../../data';
 
 test.serial('should be able to initialize project config', t => {
@@ -51,7 +52,7 @@ test('default config should be valid', t => {
   t.is(cfg.chain, 'ethereum');
   t.is(cfg.envs.local!.backend, 'geth');
   t.is(cfg.envs.local!.datadir, '~/.double/ethereum');
-  t.deepEqual(cfg.envs.local!.hosts, ['127.0.0.1:30303']);
+  t.is(cfg.envs.local!.host, '127.0.0.1:30303');
   t.is(cfg.envs.local!.networkID, 999);
 });
 
@@ -62,9 +63,7 @@ test('default test config should be valid', t => {
   t.is(cfg.chain, 'ethereum');
   t.is(cfg.envs.local!.backend, 'geth');
   t.is(cfg.envs.local!.datadir, '~/.double/ethereum');
-  t.deepEqual(cfg.envs.local!.hosts, [
-    '127.0.0.1:30303', {host: '127.0.0.1', port: 30304, rpcPort: 8546},
-  ]);
+  t.deepEqual(cfg.envs.local!.host as INodeConfig, {ip: '127.0.0.1', port: 30304, rpcPort: 8546});
   t.is(cfg.envs.local!.networkID, 999);
 });
 

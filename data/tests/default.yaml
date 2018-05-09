@@ -4,8 +4,7 @@ envs:
     networkID: 999
     datadir: ~/.double/ethereum
     local: true
-    hosts:
-      - 127.0.0.1:30303
-      - host: 127.0.0.1
-        port: 30304
-        rpcPort: 8546
+    host:
+      ip: 127.0.0.1
+      port: 30304
+      rpcPort: 8546
