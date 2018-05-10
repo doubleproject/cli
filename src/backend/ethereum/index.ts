@@ -25,24 +25,39 @@ export function createGenesis(folder: string) {
   fs.copySync(ETHEREUM_PROJECT_GENESIS, file);
 }
 
-export function createAccounts(
-  datadir: string, backend: string, count?: number,
-) {
-  const keystore = path.join(untildify(datadir), 'keystore');
+/**
+ * Creates accounts.
+ *
+ * This creates accounts offline by generating private key files, and creates
+ * or updates the accounts.json file.
+ *
+ * @param {string} datadir - The data directory. Key files will be kept in the
+ *     keystore subfolder, and accounts.json will be placed in the root level.
+ * @param {string} pw - The password to lock the key files with. If not
+ *     provided, default to double.
+ * @param {number} count - The number of accounts to generate. Default to 10.
+ */
+export function createAccounts(datadir: string, pw?: string, count?: number) {
+  datadir = untildify(datadir);
+  const manifest = path.join(datadir, 'accounts.json');
+  const keystore = path.join(datadir, 'keystore');
 
-  // let accounts = {};
-  // const manifest = path.join(datadir, 'accounts.json');
-  // if (fs.existsSync(manifest)) {
-  //   accounts = {};
-  // }
+  let accounts: { [name: string]: string } = {};
+  if (fs.existsSync(manifest)) {
+    accounts = JSON.parse(fs.readFileSync(manifest).toString());
+  }
 
+  const existing = Object.keys(accounts).length;
   count = count || 10;
+
   for (let i = 0; i < count; i++) {
     const dk = keythereum.create();
-    const key = keythereum.dump('double', dk.privateKey, dk.salt, dk.iv);
+    const key = keythereum.dump(pw || 'double', dk.privateKey, dk.salt, dk.iv);
     keythereum.exportToFile(key, keystore);
-    // accounts[i] = key.address;
+    accounts[`a${existing + i}`] = key.address;
   }
+
+  fs.writeFileSync(manifest, JSON.stringify(accounts), 'utf8');
 }
 
 export function init(datadir: string, backend: string): boolean {
