@@ -56,7 +56,7 @@ export function createAccounts(datadir: string, pw?: string, count?: number) {
     const dk = keythereum.create();
     const key = keythereum.dump(pw || 'double', dk.privateKey, dk.salt, dk.iv);
     keythereum.exportToFile(key, keystore);
-    accounts[`a${existing + i}`] = key.address;
+    accounts[`a${existing + i + 1}`] = key.address;
   }
 
   fs.writeFileSync(manifest, JSON.stringify(accounts), 'utf8');
