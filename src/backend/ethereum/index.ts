@@ -14,14 +14,15 @@ import Geth from './geth';
 /**
  * Creates a genesis.json file.
  *
- * @param {string} folder - The folder to put genesis.json in.
+ * @param {string} datadir - The folder to put genesis.json in.
  */
-export function createGenesis(folder: string) {
-  const file = path.join(folder, 'genesis.json');
+export function createGenesis(datadir: string) {
+  datadir = untildify(datadir);
+  const file = path.join(datadir, 'genesis.json');
   if (fs.existsSync(file)) {
     throw new Error('genesis file already exists');
   }
-  fs.ensureDirSync(folder);
+  fs.ensureDirSync(datadir);
   fs.copySync(ETHEREUM_PROJECT_GENESIS, file);
 }
 
@@ -41,6 +42,7 @@ export function createAccounts(datadir: string, pw?: string, count?: number) {
   datadir = untildify(datadir);
   const manifest = path.join(datadir, 'accounts.json');
   const keystore = path.join(datadir, 'keystore');
+  fs.ensureDirSync(keystore);
 
   let accounts: { [name: string]: string } = {};
   if (fs.existsSync(manifest)) {

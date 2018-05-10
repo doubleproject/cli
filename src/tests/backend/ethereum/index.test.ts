@@ -21,6 +21,11 @@ test('create genesis should error out if already exists', t => {
   });
 });
 
+test('should be able to create accounts', t => {
+  eth.createAccounts('eth-test', undefined, 3);
+  t.is(fs.readdirSync('eth-test/keystore').length, 3);
+});
+
 test('should not be able to clean invalid backend', t => {
   t.throws(() => {
     eth.clean('', 'invalid');
