@@ -46,6 +46,17 @@ test('cleaning invalid environment should fail', t => {
   });
 });
 
+test('cleaning invalid chain should fail', t => {
+  t.throws(() => {
+    clean.cleanEnv('env', {
+      local: true,
+      chain: 'invalid',
+      datadir: 'datadir',
+      hosts: [],
+    });
+  });
+});
+
 test.after.always(t => {
   process.chdir('..');
   fs.removeSync('clean-test');
