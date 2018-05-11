@@ -3,12 +3,10 @@ import * as path from 'path';
 import * as fs from 'fs-extra';
 import * as Listr from 'listr';
 
-import { createGenesis } from '../backend/ethereum';
-import Geth from '../backend/ethereum/geth';
+import { createGenesis, init } from '../backend/ethereum';
 import Config from '../config';
 import { IEnvConfig } from '../config/schema';
 import { error } from '../lib/utils/logging';
-import { executeSync } from '../lib/utils/shell';
 
 function localSetupTask(name: string, config: IEnvConfig): Listr.ListrTask {
   return {
@@ -32,9 +30,7 @@ function localSetupTask(name: string, config: IEnvConfig): Listr.ListrTask {
           return undefined;
         },
         task: (_, subtask) => {
-          const command = Geth.initScript(config.datadir);
-          const response = executeSync(command);
-          if (response.status === 0) {
+          if (init(config.datadir, config.backend!)) {
             subtask.title = 'Created local test network';
           } else {
             throw new Error('Unable to initialize local network');

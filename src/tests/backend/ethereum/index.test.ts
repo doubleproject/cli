@@ -21,6 +21,18 @@ test('create genesis should error out if already exists', t => {
   });
 });
 
+test('should be able to create accounts', t => {
+  eth.createAccounts('eth-test', undefined, 3);
+  t.is(fs.readdirSync('eth-test/keystore').length, 3);
+  let json = JSON.parse(fs.readFileSync('eth-test/accounts.json').toString());
+  t.deepEqual(Object.keys(json).sort(), ['a1', 'a2', 'a3']);
+
+  eth.createAccounts('eth-test', undefined, 3);
+  t.is(fs.readdirSync('eth-test/keystore').length, 6);
+  json = JSON.parse(fs.readFileSync('eth-test/accounts.json').toString());
+  t.deepEqual(Object.keys(json).sort(), ['a1', 'a2', 'a3', 'a4', 'a5', 'a6']);
+});
+
 test('should not be able to clean invalid backend', t => {
   t.throws(() => {
     eth.clean('', 'invalid');
