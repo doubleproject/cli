@@ -77,16 +77,15 @@ export default class Config {
    * @param {IProjectConfig} cfg - The project config object.
    */
   public static prune(cfg: IProjectConfig) {
-    if (!cfg.chain || !cfg.backend) {
-      return;
-    }
+    const chain = cfg.chain || 'ethereum';
+    const backend = cfg.backend || (chain === 'ethereum' ? 'geth' : undefined);
 
     for (const key of Object.keys(cfg.envs)) {
       const env = cfg.envs[key];
-      if (cfg.chain && env.chain === cfg.chain) {
+      if (env.chain === chain) {
         delete env.chain;
       }
-      if (cfg.backend && env.backend === cfg.backend) {
+      if (backend && env.backend === backend) {
         delete env.backend;
       }
       cfg.envs[key] = env;

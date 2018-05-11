@@ -2,6 +2,7 @@ import * as inquirer from 'inquirer';
 
 import * as ethereum from '../backend/ethereum';
 import Config from '../config';
+import { IEnvConfig, IProjectConfig } from '../config/schema';
 import { info } from '../lib/utils/logging';
 
 /**
@@ -14,7 +15,15 @@ import { info } from '../lib/utils/logging';
  *     project is cleaned.
  */
 export function cli(env?: string) {
-  env ? cleanEnv(env) : cleanProjectWithConfirmation();
+  const cfg = Config.get();
+  if (env) {
+    if (!cfg.envs[env]) {
+      throw new Error(`Invalid environment ${env}`);
+    }
+    cleanEnv(env, cfg.envs[env]);
+  } else {
+    cleanProjectWithConfirmation(cfg);
+  }
 }
 
 /**
@@ -22,9 +31,10 @@ export function cli(env?: string) {
  *
  * This function asks for user confirmation before proceeding. If there is no
  * current project, the default project will be cleaned.
+ *
+ * @param {IProjectConfig} cfg - The project configuration.
  */
-function cleanProjectWithConfirmation() {
-  const cfg = Config.get();
+export function cleanProjectWithConfirmation(cfg: IProjectConfig) {
   info(`Cleaning ${cfg.project} project...`);
   info('This will remove all blocks from all local environments. ' +
     'To clean a specific environment, use `double clean [env]`.\n');
@@ -35,14 +45,19 @@ function cleanProjectWithConfirmation() {
   }];
   inquirer.prompt(questions).then((answers: any) => {
     if (answers.confirm) {
-      cleanProject();
+      cleanProject(cfg);
     }
   });
 }
 
-function cleanProject() {
-  for (const key of Object.keys(Config.get().envs)) {
-    cleanEnv(key);
+/**
+ * Cleans all environments of a project.
+ *
+ * @param {IProjectConfig} cfg - The project configuration.
+ */
+export function cleanProject(cfg: IProjectConfig) {
+  for (const key of Object.keys(cfg.envs)) {
+    cleanEnv(key, cfg.envs[key]);
   }
 }
 
@@ -53,9 +68,9 @@ function cleanProject() {
  * environment is missing, an error will be thrown.
  *
  * @param {string} env - The environment to clean.
+ * @param {IEnvConfig} cfg - The config of the environment.
  */
-function cleanEnv(env: string) {
-  const cfg = Config.getForEnv(env);
+export function cleanEnv(env: string, cfg: IEnvConfig) {
   if (!cfg.local) {
     return;
   }

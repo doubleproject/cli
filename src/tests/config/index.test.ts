@@ -25,6 +25,17 @@ test.serial('get config with no double.yaml and nocascade should fail', t => {
   });
 });
 
+test.serial('should be able to get env config', t => {
+  const cfg = Config.getForEnv('local');
+  t.is(cfg.datadir, '~/.double/ethereum');
+});
+
+test('get env config with invalid env should fail', t => {
+  t.throws(() => {
+    Config.getForEnv('invalid');
+  });
+});
+
 test('should be able to load initialized project config', t => {
   const cfg = Config.init('double-test');
 
@@ -51,7 +62,9 @@ test('default test config should be valid', t => {
   t.is(cfg.chain, 'ethereum');
   t.is(cfg.envs.local!.backend, 'geth');
   t.is(cfg.envs.local!.datadir, '~/.double/ethereum');
-  t.deepEqual(cfg.envs.local!.hosts, ['127.0.0.1:30303', {host: '127.0.0.1', port: 30304, rpcPort: 8546}]);
+  t.deepEqual(cfg.envs.local!.hosts, [
+    '127.0.0.1:30303', {host: '127.0.0.1', port: 30304, rpcPort: 8546},
+  ]);
   t.is(cfg.envs.local!.networkID, 999);
 });
 
@@ -69,6 +82,7 @@ test('should be able to prune config', t => {
 
   cfg.envs.local.chain = 'chain';
   cfg.envs.local.backend = 'backend';
+  Config.prune(cfg);
   t.is(cfg.envs.local.chain, 'chain');
   t.is(cfg.envs.local.backend, 'backend');
 });
