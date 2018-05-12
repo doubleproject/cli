@@ -30,11 +30,8 @@ function localSetupTask(name: string, config: IEnvConfig): Listr.ListrTask {
           return undefined;
         },
         task: (_, subtask) => {
-          if (init(config.datadir, config.backend!)) {
-            subtask.title = 'Created local test network';
-          } else {
-            throw new Error('Unable to initialize local network');
-          }
+          init(config.datadir, config.backend!);
+          subtask.title = 'Created local test network';
         },
       }]);
     },

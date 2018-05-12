@@ -4,6 +4,7 @@
  * and should rather go through routers in this file.
  */
 
+import { IEnvConfig } from '../config/schema';
 import { untildify } from '../lib/utils/compat';
 import * as ethereum from './ethereum';
 
@@ -22,12 +23,41 @@ export function createGenesis(chain: string, datadir: string) {
   }
 }
 
+/**
+ * Creates accounts.
+ *
+ * This creates accounts offline by generating private key files, and creates
+ * or updates the accounts.json file.
+ *
+ * @param {string} chain - Type of the blockchain.
+ * @param {string} datadir - The data directory. Key files will be kept in the
+ *     keystore subfolder, and accounts.json will be placed in the root level.
+ * @param {string} pw - The password to lock the key files with. If not
+ *     provided, default to double.
+ * @param {number} count - The number of accounts to generate. Default to 5.
+ */
 export function createAccounts(
   chain: string, datadir: string, pw?: string, count?: number,
 ) {
   datadir = untildify(datadir);
   if (chain === 'ethereum') {
     ethereum.createAccounts(datadir, pw, count);
+  } else {
+    throw new Error(`Unsupported chain ${chain}`);
+  }
+}
+
+/**
+ * Initializes a local node.
+ *
+ * @param {string} chain - Type of the blockchain.
+ * @param {string} datadir - The data directory.
+ * @param {string} backend - Backend to use.
+ */
+export function init(chain: string, datadir: string, backend: string) {
+  datadir = untildify(datadir);
+  if (chain === 'ethereum') {
+    ethereum.init(datadir, backend);
   } else {
     throw new Error(`Unsupported chain ${chain}`);
   }
@@ -47,6 +77,22 @@ export function clean(chain: string, datadir: string, backend: string) {
   datadir = untildify(datadir);
   if (chain === 'ethereum') {
     ethereum.clean(datadir, backend);
+  } else {
+    throw new Error(`Unsupported chain ${chain}`);
+  }
+}
+
+/**
+ * Starts a local node.
+ *
+ * @param {string} chain - Type of the blockchain.
+ * @param {string} datadir - The data directory.
+ * @param {IEnvConfig} config - The environment configuration.
+ */
+export function start(chain: string, datadir: string, config: IEnvConfig) {
+  datadir = untildify(datadir);
+  if (chain === 'ethereum') {
+    ethereum.start(datadir, config);
   } else {
     throw new Error(`Unsupported chain ${chain}`);
   }
