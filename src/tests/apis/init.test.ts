@@ -27,6 +27,20 @@ test('should skip account creation if already exists', t => {
   t.truthy(task.skip());
 });
 
+test('should skip genesis creation if remote', t => {
+  const task = init.__get__('createGenesisTask')('remote', {
+    chain: 'ethereum', datadir: 'init-test/account', hosts: [],
+  });
+  t.truthy(task.skip());
+});
+
+test('should be able to build env setup task', t => {
+  const task = init.__get__('envSetupTask')('local', {
+    chain: 'ethereum', datadir: 'init-test/na', hosts: [], local: true,
+  });
+  t.truthy(task.task());
+});
+
 test.after.always(t => {
   fs.removeSync('init-test');
 });
