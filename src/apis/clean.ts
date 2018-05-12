@@ -1,6 +1,6 @@
 import * as inquirer from 'inquirer';
 
-import * as ethereum from '../backend/ethereum';
+import * as backend from '../backend';
 import Config from '../config';
 import { IEnvConfig, IProjectConfig } from '../config/schema';
 import { info } from '../lib/utils/logging';
@@ -75,10 +75,6 @@ export function cleanEnv(env: string, cfg: IEnvConfig) {
     return;
   }
 
-  if (cfg.chain === 'ethereum') {
-    ethereum.clean(cfg.datadir, cfg.backend!);
-    info(`Environment cleaned: ${env}`);
-  } else {
-    throw new Error(`Unsupported chain: ${cfg.chain}`);
-  }
+  backend.clean(cfg.chain!, cfg.datadir, cfg.backend!);
+  info(`Environment cleaned: ${env}`);
 }

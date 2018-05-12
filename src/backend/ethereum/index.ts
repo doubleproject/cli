@@ -17,7 +17,6 @@ import Geth from './geth';
  * @param {string} datadir - The folder to put genesis.json in.
  */
 export function createGenesis(datadir: string) {
-  datadir = untildify(datadir);
   const file = path.join(datadir, 'genesis.json');
   if (fs.existsSync(file)) {
     throw new Error('genesis file already exists');
@@ -39,7 +38,6 @@ export function createGenesis(datadir: string) {
  * @param {number} count - The number of accounts to generate. Default to 10.
  */
 export function createAccounts(datadir: string, pw?: string, count?: number) {
-  datadir = untildify(datadir);
   const manifest = path.join(datadir, 'accounts.json');
   const keystore = path.join(datadir, 'keystore');
   fs.ensureDirSync(keystore);
@@ -82,7 +80,6 @@ export function init(datadir: string, backend: string): boolean {
  * @param {string} backend - The backend used.
  */
 export function clean(datadir: string, backend: string) {
-  datadir = untildify(datadir);
   if (backend === 'geth') {
     Geth.clean(datadir);
   } else {
