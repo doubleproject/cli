@@ -63,9 +63,6 @@ function createGenesisTask(name: string, config: IEnvConfig): Listr.ListrTask {
         },
       }, {
         title: `Initializing genesis block for ${name} network`,
-        skip: () => {
-          return undefined;
-        },
         task: (_, subtask) => {
           backend.init(config.chain!, config.datadir, config.backend!);
           subtask.title = 'Created local test network';
