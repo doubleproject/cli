@@ -13,6 +13,22 @@ test('should be able to create genesis.json in nonexistent folder', t => {
   t.true(fs.existsSync('eth-test/folder1/folder2/genesis.json'));
 });
 
+test('should be able to create genesis.json with account information', t => {
+  fs.ensureDirSync('eth-test/account');
+  const account = {key1: 'account1', key2: 'account2'};
+  fs.writeFileSync(
+    'eth-test/account/accounts.json', JSON.stringify(account), 'utf8',
+  );
+  eth.createGenesis('eth-test/account');
+  const genesis = JSON.parse(
+    fs.readFileSync('eth-test/account/genesis.json').toString(),
+  );
+  t.deepEqual(genesis.alloc, {
+    account1: {balance: '10000000000000000000'},
+    account2: {balance: '10000000000000000000'},
+  });
+});
+
 test('create genesis should error out if already exists', t => {
   fs.ensureDirSync('eth-test/folder2');
   fs.writeFileSync('eth-test/folder2/genesis.json', '');

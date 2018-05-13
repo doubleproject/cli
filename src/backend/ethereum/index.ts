@@ -13,6 +13,9 @@ import Geth from './geth';
 /**
  * Creates a genesis.json file.
  *
+ * If there is an account.json file, accounts in it will each be granted 1 ETH
+ * in the genesis block.
+ *
  * @param {string} datadir - The folder to put genesis.json in.
  */
 export function createGenesis(datadir: string) {
@@ -20,8 +23,22 @@ export function createGenesis(datadir: string) {
   if (fs.existsSync(file)) {
     throw new Error('genesis file already exists');
   }
+
+  let accounts: {[key: string]: string} = {};
+  const manifest = path.join(datadir, 'accounts.json');
+  if (fs.existsSync(manifest)) {
+    accounts = JSON.parse(fs.readFileSync(manifest).toString());
+  }
+
+  const genesis = JSON.parse(
+    fs.readFileSync(ETHEREUM_PROJECT_GENESIS).toString(),
+  );
+  for (const key of Object.keys(accounts).sort()) {
+    genesis.alloc[accounts[key]] = {balance: '10000000000000000000'};
+  }
+
   fs.ensureDirSync(datadir);
-  fs.copySync(ETHEREUM_PROJECT_GENESIS, file);
+  fs.writeFileSync(file, JSON.stringify(genesis), 'utf8');
 }
 
 /**
