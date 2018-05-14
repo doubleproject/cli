@@ -1,6 +1,6 @@
 export interface INodeConfig {
   /** Host IP address */
-  ip: string;
+  host: string;
 
   /** Protocol port */
   port: number;
@@ -31,7 +31,7 @@ export interface IEnvConfig {
    * A node configuration. Either a string in the form of IP:port, or an
    * `INodeConfig`.
    */
-  host: string | INodeConfig;
+  host: INodeConfig;
 
   /** Backend to use for local nodes. Default is geth. */
   backend?: string;

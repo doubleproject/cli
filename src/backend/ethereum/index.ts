@@ -120,24 +120,9 @@ export function clean(datadir: string, backend: string) {
  */
 export function start(datadir: string, proj: string, env: string, config: IEnvConfig) {
   if (config.backend === 'geth') {
-    let ip;
-    let port;
-    let rpcPort;
-
-    if (typeof(config.host) === 'string') {
-      const ipPortParts = config.host.split(':');
-      ip = ipPortParts[0];
-      port = parseInt(ipPortParts[1], 10);
-    } else {
-      ip = config.host.ip;
-      port = config.host.port;
-      rpcPort = config.host.rpcPort;
-    }
-
-    if (typeof(rpcPort) === 'undefined') {
-      // Default RPC Port for geth.
-      rpcPort = 8545;
-    }
+    const ip = config.host.host;
+    const port = config.host.port;
+    const rpcPort = config.host.rpcPort ? config.host.rpcPort! : 8545;
 
     const script = Geth.startScript({
       datadir,

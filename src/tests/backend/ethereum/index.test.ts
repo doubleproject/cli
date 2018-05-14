@@ -59,7 +59,10 @@ test('should not be able to start invalid backend', t => {
       chain: 'ethereum',
       backend: 'invalid',
       datadir: '',
-      host: 'localhost:30303',
+      host: {
+        host: '',
+        port: 0,
+      },
     });
   });
 });

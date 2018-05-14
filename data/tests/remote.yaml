@@ -5,4 +5,6 @@ envs:
   remote:
     networkID: 999
     datadir: remote
-    host: 127.0.0.1:30303
+    host:
+      host: 127.0.0.1
+      port: 30303

@@ -4,7 +4,7 @@
     "INodeConfig": {
       "description": "Detailed configuration of a node",
       "properties": {
-        "ip": {
+        "host": {
           "description": "Host IP address",
           "type": "string"
         },
@@ -19,7 +19,7 @@
       },
       "type": "object",
       "required": [
-        "ip",
+        "host",
         "port"
       ]
     },
@@ -45,12 +45,7 @@
         },
         "host": {
           "description": "Host IP:port addresses, in that format",
-          "oneOf": [
-            { "type": "string" },
-            {
-              "$ref": "#/definitions/INodeConfig"
-            }
-          ]
+          "$ref": "#/definitions/INodeConfig"
         },
         "local": {
           "description": "Whether the environment is for a local node",

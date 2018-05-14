@@ -7,6 +7,6 @@ envs:
     datadir: ~/.double/ethereum
     local: true
     host:
-      ip: 127.0.0.1
+      host: 127.0.0.1
       port: 30303
       rpcPort: 9485
