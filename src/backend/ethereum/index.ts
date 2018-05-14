@@ -27,18 +27,16 @@ export function createGenesis(datadir: string) {
   let accounts: {[key: string]: string} = {};
   const manifest = path.join(datadir, 'accounts.json');
   if (fs.existsSync(manifest)) {
-    accounts = JSON.parse(fs.readFileSync(manifest).toString());
+    accounts = fs.readJsonSync(manifest);
   }
 
-  const genesis = JSON.parse(
-    fs.readFileSync(ETHEREUM_PROJECT_GENESIS).toString(),
-  );
+  const genesis = fs.readJsonSync(ETHEREUM_PROJECT_GENESIS);
   for (const key of Object.keys(accounts).sort()) {
     genesis.alloc[accounts[key]] = {balance: '10000000000000000000'};
   }
 
   fs.ensureDirSync(datadir);
-  fs.writeFileSync(file, JSON.stringify(genesis), 'utf8');
+  fs.writeJsonSync(file, genesis);
 }
 
 /**
@@ -60,7 +58,7 @@ export function createAccounts(datadir: string, pw?: string, count?: number) {
 
   let accounts: { [name: string]: string } = {};
   if (fs.existsSync(manifest)) {
-    accounts = JSON.parse(fs.readFileSync(manifest).toString());
+    accounts = fs.readJsonSync(manifest);
   }
 
   const existing = Object.keys(accounts).length;
@@ -73,7 +71,7 @@ export function createAccounts(datadir: string, pw?: string, count?: number) {
     accounts[`a${existing + i + 1}`] = key.address;
   }
 
-  fs.writeFileSync(manifest, JSON.stringify(accounts), 'utf8');
+  fs.writeJsonSync(manifest, accounts);
 }
 
 /**

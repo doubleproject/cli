@@ -16,9 +16,7 @@ test('should be able to create genesis.json in nonexistent folder', t => {
 test('should be able to create genesis.json with account information', t => {
   fs.ensureDirSync('eth-test/account');
   const account = {key1: 'account1', key2: 'account2'};
-  fs.writeFileSync(
-    'eth-test/account/accounts.json', JSON.stringify(account), 'utf8',
-  );
+  fs.writeJsonSync('eth-test/account/accounts.json', account);
   eth.createGenesis('eth-test/account');
   const genesis = JSON.parse(
     fs.readFileSync('eth-test/account/genesis.json').toString(),
@@ -40,12 +38,12 @@ test('create genesis should error out if already exists', t => {
 test('should be able to create accounts', t => {
   eth.createAccounts('eth-test', undefined, 3);
   t.is(fs.readdirSync('eth-test/keystore').length, 3);
-  let json = JSON.parse(fs.readFileSync('eth-test/accounts.json').toString());
+  let json = fs.readJsonSync('eth-test/accounts.json');
   t.deepEqual(Object.keys(json).sort(), ['a1', 'a2', 'a3']);
 
   eth.createAccounts('eth-test', undefined, 3);
   t.is(fs.readdirSync('eth-test/keystore').length, 6);
-  json = JSON.parse(fs.readFileSync('eth-test/accounts.json').toString());
+  json = fs.readJsonSync('eth-test/accounts.json');
   t.deepEqual(Object.keys(json).sort(), ['a1', 'a2', 'a3', 'a4', 'a5', 'a6']);
 });
 
