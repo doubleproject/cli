@@ -3,49 +3,83 @@ import * as path from 'path';
 import * as fs from 'fs-extra';
 import * as Listr from 'listr';
 
-import { createGenesis, init } from '../backend/ethereum';
+import * as backend from '../backend';
 import Config from '../config';
 import { IEnvConfig } from '../config/schema';
+import { untildify } from '../lib/utils/compat';
 import { error } from '../lib/utils/logging';
 
-function localSetupTask(name: string, config: IEnvConfig): Listr.ListrTask {
+/**
+ * Task for creating accounts.
+ *
+ * For each environment, we set up 5 accounts for user to use. If there appears
+ * to be existing accounts (either accounts.json or keystore folder) for an
+ * environment, this task is skipped.
+ *
+ * @param {string} name - The name of the environment.
+ * @param {IEnvConfig} config - The configuration of the environment.
+ * @returns {Listr.ListrTask} The listr task.
+ */
+function createAccountTask(name: string, config: IEnvConfig): Listr.ListrTask {
+  const datadir = untildify(config.datadir);
   return {
-    title: `Setting up ${name} environment`,
+    title: `Creating accounts for ${name} environment`,
+    skip: ctx => {
+      if (fs.existsSync(path.join(datadir, 'accounts.json')) ||
+          fs.existsSync(path.join(datadir, 'keystore'))) {
+        return 'Found existing account definition in accounts.json/keystore';
+      }
+      return undefined;
+    },
+    task: (ctx, task) => {
+      backend.createAccounts(config.chain!, datadir);
+      task.title = `Created accounts for ${name} environment`;
+    },
+  };
+}
+
+function createGenesisTask(name: string, config: IEnvConfig): Listr.ListrTask {
+  const datadir = untildify(config.datadir);
+  return {
+    title: `Setting up genesis config for ${name} environment`,
+    skip: () => {
+      if (!config.local) {
+        return 'Remote environment requires no genesis config';
+      }
+      return undefined;
+    },
     task: (ctx, task) => {
       return new Listr([{
         title: 'Checking genesis block configuration',
         skip: () => {
-          if (fs.existsSync(path.join(config.datadir, 'genesis.json'))) {
+          if (fs.existsSync(path.join(datadir, 'genesis.json'))) {
             return 'Found existing genesis.json file';
           }
           return undefined;
         },
         task: (_, subtask) => {
-          createGenesis(config.datadir);
+          backend.createGenesis(config.chain!, datadir);
           subtask.title = `Created genesis.json file for ${name} environment`;
         },
       }, {
         title: `Initializing genesis block for ${name} network`,
-        skip: () => {
-          return undefined;
-        },
         task: (_, subtask) => {
-          if (init(config.datadir, config.backend!)) {
-            subtask.title = 'Created local test network';
-          } else {
-            throw new Error('Unable to initialize local network');
-          }
+          backend.init(config.chain!, config.datadir, config.backend!);
+          subtask.title = 'Created local test network';
         },
       }]);
     },
   };
 }
 
-function remoteSetupTask(name: string, config: IEnvConfig): Listr.ListrTask {
+function envSetupTask(name: string, config: IEnvConfig): Listr.ListrTask {
   return {
-    title: `Setting up environment ${name}`,
+    title: `Setting up ${name} environment`,
     task: (ctx, task) => {
-      task.title = 'Nothing to do for remote environment';
+      return new Listr([
+        createAccountTask(name, config),
+        createGenesisTask(name, config),
+      ]);
     },
   };
 }
@@ -77,10 +111,7 @@ export function cli() {
       const subtasks = [];
       const envs = ctx.config.envs;
       for (const key of Object.keys(envs)) {
-        const data = envs[key];
-        const subtask = data.local ?
-          localSetupTask(key, data) : remoteSetupTask(key, data);
-        subtasks.push(subtask);
+        subtasks.push(envSetupTask(key, envs[key]));
       }
       return new Listr(subtasks);
     },

@@ -1,6 +1,6 @@
 import * as inquirer from 'inquirer';
 
-import * as ethereum from '../backend/ethereum';
+import * as backend from '../backend';
 import Config from '../config';
 import { IEnvConfig, IProjectConfig } from '../config/schema';
 import { info } from '../lib/utils/logging';
@@ -72,9 +72,5 @@ export function startMulti(cfg: IProjectConfig, envs: string[]) {
  */
 export function startSingle(env: string, cfg: IEnvConfig) {
   info(`Starting ${env} environment`);
-  if (cfg.chain === 'ethereum') {
-    ethereum.start(cfg);
-  } else {
-    throw new Error(`Invalid chain ${cfg.chain} for ${env} environment`);
-  }
+  backend.start(cfg.chain!, cfg.datadir, cfg);
 }

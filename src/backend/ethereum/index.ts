@@ -5,7 +5,6 @@ import * as keythereum from 'keythereum';
 
 import { IEnvConfig } from '../../config/schema';
 import { ETHEREUM_PROJECT_GENESIS } from '../../data';
-import { untildify } from '../../lib/utils/compat';
 import { executeSync } from '../../lib/utils/shell';
 import { execute } from '../../lib/utils/shell';
 
@@ -14,16 +13,30 @@ import Geth from './geth';
 /**
  * Creates a genesis.json file.
  *
+ * If there is an account.json file, accounts in it will each be granted 1 ETH
+ * in the genesis block.
+ *
  * @param {string} datadir - The folder to put genesis.json in.
  */
 export function createGenesis(datadir: string) {
-  datadir = untildify(datadir);
   const file = path.join(datadir, 'genesis.json');
   if (fs.existsSync(file)) {
     throw new Error('genesis file already exists');
   }
+
+  let accounts: {[key: string]: string} = {};
+  const manifest = path.join(datadir, 'accounts.json');
+  if (fs.existsSync(manifest)) {
+    accounts = fs.readJsonSync(manifest);
+  }
+
+  const genesis = fs.readJsonSync(ETHEREUM_PROJECT_GENESIS);
+  for (const key of Object.keys(accounts).sort()) {
+    genesis.alloc[accounts[key]] = {balance: '10000000000000000000'};
+  }
+
   fs.ensureDirSync(datadir);
-  fs.copySync(ETHEREUM_PROJECT_GENESIS, file);
+  fs.writeJsonSync(file, genesis);
 }
 
 /**
@@ -36,21 +49,20 @@ export function createGenesis(datadir: string) {
  *     keystore subfolder, and accounts.json will be placed in the root level.
  * @param {string} pw - The password to lock the key files with. If not
  *     provided, default to double.
- * @param {number} count - The number of accounts to generate. Default to 10.
+ * @param {number} count - The number of accounts to generate. Default is 5.
  */
 export function createAccounts(datadir: string, pw?: string, count?: number) {
-  datadir = untildify(datadir);
   const manifest = path.join(datadir, 'accounts.json');
   const keystore = path.join(datadir, 'keystore');
   fs.ensureDirSync(keystore);
 
   let accounts: { [name: string]: string } = {};
   if (fs.existsSync(manifest)) {
-    accounts = JSON.parse(fs.readFileSync(manifest).toString());
+    accounts = fs.readJsonSync(manifest);
   }
 
   const existing = Object.keys(accounts).length;
-  count = count || 10;
+  count = count || 5;
 
   for (let i = 0; i < count; i++) {
     const dk = keythereum.create();
@@ -59,14 +71,22 @@ export function createAccounts(datadir: string, pw?: string, count?: number) {
     accounts[`a${existing + i + 1}`] = key.address;
   }
 
-  fs.writeFileSync(manifest, JSON.stringify(accounts), 'utf8');
+  fs.writeJsonSync(manifest, accounts);
 }
 
-export function init(datadir: string, backend: string): boolean {
-  datadir = untildify(datadir);
+/**
+ * Initializes a local node.
+ *
+ * @param {string} datadir - The data directory.
+ * @param {string} backend - Backend to use.
+ */
+export function init(datadir: string, backend: string) {
   if (backend === 'geth') {
     const command = Geth.initScript(datadir);
-    return executeSync(command).status === 0;
+    const result = executeSync(command);
+    if (result.status !== 0) {
+      throw new Error(`Unable to start Geth node\n${result.error}`);
+    }
   } else {
     throw new Error(`Unsupported Ethereum backend ${backend}`);
   }
@@ -82,7 +102,6 @@ export function init(datadir: string, backend: string): boolean {
  * @param {string} backend - The backend used.
  */
 export function clean(datadir: string, backend: string) {
-  datadir = untildify(datadir);
   if (backend === 'geth') {
     Geth.clean(datadir);
   } else {
@@ -93,10 +112,10 @@ export function clean(datadir: string, backend: string) {
 /**
  * Starts a local backend.
  *
+ * @param {string} datadir - The data directory.
  * @param {IEnvConfig} config - The environment configuration.
  */
-export function start(config: IEnvConfig) {
-  const datadir = untildify(config.datadir);
+export function start(datadir: string, config: IEnvConfig) {
   if (config.backend === 'geth') {
     const script = Geth.startScript({
       datadir,
