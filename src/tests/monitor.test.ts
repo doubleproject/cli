@@ -315,3 +315,38 @@ test.serial('monitor should return nodes with matching environments', async t =>
   t.is(status2[0].address, 'localhost:9001');
   t.is(status2.length, 1);
 });
+
+test.serial('monitor should update configuration with new process id after revival', async t => {
+  const context = t.context as ITestContext;
+
+  const newNode = {
+    address: 'localhost:9000',
+    project: 'testproj',
+    environment: 'local',
+    reviveCmd: 'echo',
+    reviveArgs: 'foobar',
+  };
+
+  await addToMonitor([newNode], context.monitorPort);
+
+  await new Promise<void>(resolve => {
+    setTimeout(() =>
+      resolve(), K_HEARTBEAT_INTERVAL * (K_FAILURE_TOLERANCE + 1),
+    );
+  });
+
+  let foundPid;
+  for (const line of fs.readFileSync('testconfig.jl', 'utf-8').split('\n')) {
+    try {
+      const cfg = JSON.parse(line);
+      if (cfg.address === newNode.address) {
+        foundPid = cfg.processId;
+      }
+    } catch (err) {
+      // Skip
+    }
+  }
+
+  t.is(typeof(foundPid), 'number');
+  t.truthy(foundPid);
+});
