@@ -120,12 +120,16 @@ export function clean(datadir: string, backend: string) {
  */
 export function start(datadir: string, proj: string, env: string, config: IEnvConfig) {
   if (config.backend === 'geth') {
+    let ip;
     let port;
     let rpcPort;
 
     if (typeof(config.host) === 'string') {
-      port = parseInt(config.host.split(':')[1], 10);
+      const ipPortParts = config.host.split(':');
+      ip = ipPortParts[0];
+      port = parseInt(ipPortParts[1], 10);
     } else {
+      ip = config.host.ip;
       port = config.host.port;
       rpcPort = config.host.rpcPort;
     }
@@ -147,7 +151,7 @@ export function start(datadir: string, proj: string, env: string, config: IEnvCo
     const process = execute(script, path.join(datadir, 'geth.log'));
 
     addToMonitor([{
-      address: `localhost:${rpcPort}`,
+      address: `${ip}:${rpcPort}`,
       project: proj,
       environment: env,
       processId: process.pid,

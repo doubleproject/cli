@@ -40,7 +40,7 @@ export interface IProjectStatus {
   nodes: IMonitoredNodeStatus[];
 
   /** The name of the environment configuration */
-  environment: string;
+  environment?: string;
 
   /** The current block number of the network */
   blockNumber: BigNumber;
@@ -59,10 +59,10 @@ export interface IProjectStatus {
  * - Account information.
  * - Useful commands.
  *
- * @param env The name of the environment we are showing status for
- * @param suppressLogging If truthy, then nothing will be printed to the console.
+ * @param env - The name of the environment we are showing status for, if undefined, show status for all environments.
+ * @param suppressLogging - If truthy, then nothing will be printed to the console.
  */
-export async function cli(env: string, suppressLogging?: boolean): Promise<IProjectStatus> {
+export async function cli(env?: string, suppressLogging?: boolean): Promise<IProjectStatus> {
   const rendererConfig: {[index: string]: any} = {};
   if (suppressLogging) {
     rendererConfig.renderer = require('listr-silent-renderer');
@@ -112,7 +112,7 @@ function getMonitorPortTask(): Listr.ListrTask {
  * Read project configuration, sets the `config` and `env` property on
  * context.
  */
-function getProjectConfigTask(env: string): Listr.ListrTask {
+function getProjectConfigTask(env?: string): Listr.ListrTask {
   return {
     title: 'Reading Double configuration',
     task: ctx => {
@@ -122,7 +122,7 @@ function getProjectConfigTask(env: string): Listr.ListrTask {
         throw new Error(`Cannot find any project configuration, please run double init`);
       }
 
-      if (!(env in ctx.config.envs)) {
+      if (env && !(env in ctx.config.envs)) {
         throw new Error(`Cannot find environment named ${env}, please check your configuration.`);
       }
 
@@ -137,8 +137,6 @@ function getProjectConfigTask(env: string): Listr.ListrTask {
 function renderTable(status: IProjectStatus): string {
   const tableData: any[] = [];
 
-  const envConfig = status.config.envs[status.environment];
-
   tableData.push(
     ['Project', status.config.project, '']);
   tableData.push(
@@ -147,8 +145,6 @@ function renderTable(status: IProjectStatus): string {
     ['Backend', status.config.backend, '']);
   tableData.push(
     ['Environment', status.environment, '']);
-  tableData.push(
-    ['Mode', envConfig.local ? 'local' : 'remote', '']);
 
   status.nodes.forEach((host, idx) => {
     tableData.push([`Node[${idx}]`, host.address, host.lastUpdate]);
@@ -189,17 +185,23 @@ function getAliveNodesTask(): Listr.ListrTask {
     },
     task: async ctx => {
       const config = ctx.config;
-      const statusUrl = `http://localhost:${ctx.monitorPort}/status/${config.project}/${ctx.env}`;
+      let statusUrl = `http://localhost:${ctx.monitorPort}/status/${config.project}`;
+      if (ctx.env) {
+        statusUrl += `/${ctx.env}`;
+      }
       const nodeStatuses = await rp.get(statusUrl);
       const nodeStatusesJSON = JSON.parse(nodeStatuses) as IMonitoredNodeStatus[];
       const aliveNodes = nodeStatusesJSON.filter(node => node.alive);
 
       if (aliveNodes.length === 0) {
-        if (config.envs[ctx.env].local) {
+        if (ctx.env && config.envs[ctx.env].local) {
           throw new Error('Local node is down, please run double start');
         }
 
-        throw new Error('Remote node is down, please double check if its address is correct');
+        throw new Error(
+          `All environments are down,
+please run double start and check
+the address configuration of remote nodes`);
       }
 
       ctx.aliveNodes = aliveNodes;

@@ -15,6 +15,7 @@ import * as getPort from 'get-port';
 import * as _ from 'lodash';
 import * as readline from 'readline';
 import * as rp from 'request-promise';
+import * as RWLock from 'rwlock';
 import * as winston from 'winston';
 
 export interface IMonitoredNodeConfig {
@@ -184,6 +185,19 @@ export async function addToMonitor(cfgs: IMonitoredNodeConfig[],
 }
 
 /**
+ * Scans for an alive monitor every 500ms, and resolves until one is found.
+ */
+export async function waitForAliveMonitor(): Promise<void> {
+  try {
+    await scanForMonitor();
+    return;
+  } catch (err) {
+    await new Promise(resolve => setTimeout(() => resolve(), 500));
+    await waitForAliveMonitor();
+  }
+}
+
+/**
  * The actual monitor implementation. It contains an express application and
  * last known node status.
  */
@@ -215,6 +229,9 @@ export class Monitor {
   /** The timer used to ping nodes */
   private timer?: NodeJS.Timer;
 
+  /** The lock used to protect configuration file */
+  private lock: RWLock;
+
   /**
    * Construct a monitor for the given nodes, open an HTTP server on the given
    * port for incoming requests.
@@ -235,6 +252,8 @@ export class Monitor {
     this.timer = undefined;
 
     this.nodeStatuses = [];
+
+    this.lock = new RWLock();
 
     // Why do we pass both config data and config path in? Because the
     // constructor cannot be asynchronous... And since parsing the configuration
@@ -342,16 +361,19 @@ export class Monitor {
    * Append the configurations to the configuration jsonline file.
    */
   private appendConfigData(nodes: IMonitoredNodeConfig[]) {
-    const file = fs.createWriteStream(this.configPath, {
-      flags: 'a',
-    });
+    this.lock.writeLock(release => {
+      const file = fs.createWriteStream(this.configPath, {
+        flags: 'a',
+      });
 
-    nodes.forEach(node => {
-      const configLine = JSON.stringify(node);
-      file.write(configLine + '\n');
-    });
+      nodes.forEach(node => {
+        const configLine = JSON.stringify(node);
+        file.write(configLine + '\n');
+      });
 
-    file.end();
+      file.end();
+      release();
+    });
   }
 
   private setupRouting() {
@@ -433,6 +455,40 @@ export class Monitor {
     });
 
     child.unref();
+
+    node.processId = child.pid;
+    this.modifyMonitoredNodeProcessId(node);
+  }
+
+  /**
+   * Search the config file using this node's address string, and replaces its
+   * processId field with the new processId value from the status.
+   */
+  private modifyMonitoredNodeProcessId(node: IMonitoredNodeStatus) {
+    this.lock.writeLock(release => {
+      const configData  = fs.readFileSync(this.configPath, 'utf8');
+      const configLines = configData.split('\n');
+
+      let lineIdx = 0;
+      for (const line of configLines) {
+        try {
+          const config = JSON.parse(line) as IMonitoredNodeConfig;
+          if (config.address === node.address) {
+            config.processId = node.processId;
+            configLines[lineIdx] = JSON.stringify(config);
+            break;
+          }
+        } catch (err) {
+          // Just skip over the bad lines.
+        }
+
+        lineIdx++;
+      }
+
+      fs.writeFileSync(this.configPath, configLines.join('\n'));
+
+      release();
+    });
   }
 
   private async ping() {

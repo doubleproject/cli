@@ -13,7 +13,9 @@ import * as clean from './apis/clean';
 import * as init from './apis/init';
 import * as start from './apis/start';
 import * as status from './apis/status';
-import { getFirstAvailablePortForMonitor, scanForMonitor } from './monitor';
+import { getFirstAvailablePortForMonitor,
+         scanForMonitor,
+         waitForAliveMonitor } from './monitor';
 
 program.version(version);
 
@@ -58,6 +60,8 @@ program
         options: ['dist/monitor.js', `${port}`, monitorConfigFile, monitorLog],
       }, monitorStdoutStderrLog);
     }
+
+    await waitForAliveMonitor();
 
     start.cli();
   });
