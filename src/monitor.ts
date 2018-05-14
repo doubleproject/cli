@@ -190,7 +190,6 @@ export async function addToMonitor(cfgs: IMonitoredNodeConfig[],
 export async function waitForAliveMonitor(): Promise<void> {
   try {
     await scanForMonitor();
-    return;
   } catch (err) {
     await new Promise(resolve => setTimeout(() => resolve(), 500));
     await waitForAliveMonitor();

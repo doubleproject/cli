@@ -13,9 +13,7 @@ import * as clean from './apis/clean';
 import * as init from './apis/init';
 import * as start from './apis/start';
 import * as status from './apis/status';
-import { getFirstAvailablePortForMonitor,
-         scanForMonitor,
-         waitForAliveMonitor } from './monitor';
+import * as Monitor from './monitor';
 
 program.version(version);
 
@@ -47,9 +45,9 @@ program
   .action(async () => {
     try {
       // Check if monitor is already running.
-      await scanForMonitor();
+      await Monitor.scanForMonitor();
     } catch (err) {
-      const port = await getFirstAvailablePortForMonitor();
+      const port = await Monitor.getFirstAvailablePortForMonitor();
       const monitorConfigFile = path.join(os.homedir(), '.double', 'monitor.jl');
       const monitorLog = path.join(os.homedir(), '.double', 'monitor.log');
       const monitorStdoutStderrLog = path.join(os.homedir(), '.double', 'monitor-stdout-stderr.log');
@@ -61,7 +59,7 @@ program
       }, monitorStdoutStderrLog);
     }
 
-    await waitForAliveMonitor();
+    await Monitor.waitForAliveMonitor();
 
     start.cli();
   });
