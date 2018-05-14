@@ -87,12 +87,18 @@ export function clean(chain: string, datadir: string, backend: string) {
  *
  * @param {string} chain - Type of the blockchain.
  * @param {string} datadir - The data directory.
+ * @param {string} proj - The name of the project.
+ * @param {string} env - The name of the environment.
  * @param {IEnvConfig} config - The environment configuration.
  */
-export function start(chain: string, datadir: string, config: IEnvConfig) {
+export function start(chain: string,
+                      datadir: string,
+                      proj: string,
+                      env: string,
+                      config: IEnvConfig) {
   datadir = untildify(datadir);
   if (chain === 'ethereum') {
-    ethereum.start(datadir, config);
+    ethereum.start(datadir, proj, env, config);
   } else {
     throw new Error(`Unsupported chain ${chain}`);
   }

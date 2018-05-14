@@ -7,6 +7,7 @@ import { IEnvConfig } from '../../config/schema';
 import { ETHEREUM_PROJECT_GENESIS } from '../../data';
 import { executeSync } from '../../lib/utils/shell';
 import { execute } from '../../lib/utils/shell';
+import { addToMonitor } from '../../monitor';
 
 import Geth from './geth';
 
@@ -113,17 +114,47 @@ export function clean(datadir: string, backend: string) {
  * Starts a local backend.
  *
  * @param {string} datadir - The data directory.
+ * @param {string} proj - The name of the project.
+ * @param {string} env - The name of the environment.
  * @param {IEnvConfig} config - The environment configuration.
  */
-export function start(datadir: string, config: IEnvConfig) {
+export function start(datadir: string, proj: string, env: string, config: IEnvConfig) {
   if (config.backend === 'geth') {
+    let port;
+    let rpcPort;
+
+    if (typeof(config.host) === 'string') {
+      port = parseInt(config.host.split(':')[1], 10);
+    } else {
+      port = config.host.port;
+      rpcPort = config.host.rpcPort;
+    }
+
+    if (typeof(rpcPort) === 'undefined') {
+      // Default RPC Port for geth.
+      rpcPort = 8545;
+    }
+
     const script = Geth.startScript({
       datadir,
       nodiscover: true,
       rpc: true,
       networkid: config.networkID,
+      port,
+      rpcport: rpcPort,
     });
-    execute(script, path.join(datadir, 'geth.log'));
+
+    const process = execute(script, path.join(datadir, 'geth.log'));
+
+    addToMonitor([{
+      address: `localhost:${rpcPort}`,
+      project: proj,
+      environment: env,
+      processId: process.pid,
+      reviveCmd: script.command,
+      reviveArgs: script.options.join(' '),
+    }]);
+
   } else {
     throw new Error(`Unsupported Ethereum backend ${config.backend}`);
   }

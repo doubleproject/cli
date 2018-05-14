@@ -43,8 +43,6 @@ program
   .command('start [env]')
   .description('Start a local environment')
   .action(async () => {
-    start.cli();
-
     try {
       // Check if monitor is already running.
       await scanForMonitor();
@@ -60,6 +58,8 @@ program
         options: ['dist/monitor.js', `${port}`, monitorConfigFile, monitorLog],
       }, monitorStdoutStderrLog);
     }
+
+    start.cli();
   });
 
 program

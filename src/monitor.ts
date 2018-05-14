@@ -34,6 +34,11 @@ export interface IMonitoredNodeConfig {
   environment: string;
 
   /**
+   * The process id of a local node.
+   */
+  processId?: number;
+
+  /**
    * A command that can be used to start/restart the node.  If `undefined`, the
    * the monitor will not try to restart the node.
    */
@@ -61,6 +66,11 @@ function validateMonitoredNodeConfig(data: any): IMonitoredNodeConfig {
     throw new Error('environment is not a string');
   }
 
+  if (data.processId &&
+      typeof(data.processId) !== 'number') {
+    throw new Error('invalid processId field');
+  }
+
   if (data.reviveCmd &&
       typeof(data.reviveCmd) !== 'string') {
     throw new Error('invalid reviveCmd field');
@@ -85,6 +95,7 @@ export interface IMonitoredNodeStatus {
   lastResponseId: number;
   failureCount: number;
   networkId?: string;
+  processId?: number;
   reviveCmd?: string;
   reviveArgs?: string[];
   project: string;
@@ -156,7 +167,7 @@ export async function scanForMonitor(): Promise<number> {
  * there is no monitor running.
  *
  * @param {IMonitoredNodeConfig[]} cfgs - The configuration used to watch this node with
- * @param {number} port - Optional port at which the port is running, if this is
+ * @param {number} port - Optional port at which the monitor is running, if this is
  * specified, this method will not scan for monitor automatically
  */
 export async function addToMonitor(cfgs: IMonitoredNodeConfig[],
