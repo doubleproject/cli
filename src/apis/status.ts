@@ -60,14 +60,8 @@ export interface IProjectStatus {
  * - Useful commands.
  *
  * @param env - The name of the environment we are showing status for, if undefined, show status for all environments.
- * @param suppressLogging - If truthy, then nothing will be printed to the console.
  */
-export async function cli(env?: string, suppressLogging?: boolean): Promise<IProjectStatus> {
-  const rendererConfig: {[index: string]: any} = {};
-  if (suppressLogging) {
-    rendererConfig.renderer = require('listr-silent-renderer');
-  }
-
+export function cli(env?: string) {
   const tasks = new Listr([
     getProjectConfigTask(env),
     getMonitorPortTask(),
@@ -76,9 +70,45 @@ export async function cli(env?: string, suppressLogging?: boolean): Promise<IPro
     getBalancesTask(),
     getBlockNumberTask(),
     getProtocolVersionTask(),
-  ], rendererConfig);
+  ]);
+
+  tasks
+    .run()
+    .then(taskContext => {
+      const status = {
+        balances: taskContext.allBalances,
+        config: taskContext.config,
+        nodes: taskContext.aliveNodes,
+        environment: taskContext.env,
+        blockNumber: taskContext.blockNumber,
+        protocolVersion: taskContext.protocolVersion,
+      };
+
+      console.log(renderTable(status));
+    });
+}
+
+/**
+ * Performs the same operations as cli(), but returns the result as a
+ * `IProjectStatus`.
+ *
+ * @param env {string} - The name of the environment
+ */
+export async function getStatus(env?: string): Promise<IProjectStatus> {
+  const tasks = new Listr([
+    getProjectConfigTask(env),
+    getMonitorPortTask(),
+    getAliveNodesTask(),
+    getExistingAccountsTask(),
+    getBalancesTask(),
+    getBlockNumberTask(),
+    getProtocolVersionTask(),
+  ], {
+    renderer: require('listr-silent-renderer'),
+  });
 
   const taskContext = await tasks.run();
+
   const status = {
     balances: taskContext.allBalances,
     config: taskContext.config,
@@ -88,9 +118,6 @@ export async function cli(env?: string, suppressLogging?: boolean): Promise<IPro
     protocolVersion: taskContext.protocolVersion,
   };
 
-  if (!suppressLogging) {
-    console.log(renderTable(status));
-  }
   return status;
 }
 

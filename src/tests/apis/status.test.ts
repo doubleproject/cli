@@ -19,13 +19,13 @@ test.before('Setting up status test directory', () => {
 
 test.serial('checking status from for non-existent environments should fail', async t => {
   await t.throws(async () => {
-    await status.cli('non-existent-env', true);
+    await status.getStatus('non-existent-env');
   });
 });
 
 test.serial('checking status without monitor should fail', async t => {
   await t.throws(async () => {
-    await status.cli('local', true);
+    await status.getStatus('local');
   });
 });
 
@@ -41,7 +41,7 @@ test.serial('status should return expected results', async t => {
   await geth1.start(9485);
   await monitor.start(availableMonitorPort);
 
-  const networkStatus = await status.cli('local', true);
+  const networkStatus = await status.getStatus('local');
 
   t.is(networkStatus.environment, 'local');
   t.is(networkStatus.config.project, 'status-test-project');
