@@ -6,26 +6,22 @@ envs:
     networkID: 999
     datadir: local1
     local: true
-    host:
-      host: 127.0.0.1
-      port: 30303
+    host: 127.0.0.1
+    port: 30303
   local2:
     networkID: 999
     datadir: local2
     local: true
-    host:
-      host: 127.0.0.1
-      port: 30304
+    host: 127.0.0.1
+    port: 30304
   local3:
     networkID: 999
     datadir: local3
     local: true
-    host:
-      host: 127.0.0.1
-      port: 30305
+    host: 127.0.0.1
+    port: 30305
   remote:
     networkID: 998
     datadir: remote
-    host:
-      host: 127.0.0.1
-      port: 30306
+    host: 127.0.0.1
+    port: 30306

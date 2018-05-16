@@ -33,9 +33,9 @@ test('should be able to clean project', t => {
 test('should be able to start local node', t => {
   sinon.stub(ethereum, 'start');
   backend.start('ethereum', 'dir', 'myproj', 'myenv',
-                {datadir: '', host: {host: '', port: 0}});
+                {datadir: '', host: '', port: 0});
   t.truthy((ethereum.start as sinon.SinonStub).calledWithMatch(
-    'dir', 'myproj', 'myenv', {datadir: '', host: {host: '', port: 0}},
+    'dir', 'myproj', 'myenv', {datadir: '', host: '', port: 0},
   ));
 });
 
@@ -53,6 +53,6 @@ test('should throw error for invalid chain', t => {
     backend.clean('invalid', '', '');
   });
   t.throws(() => {
-    backend.start('invalid', '', '', '', {datadir: '', host: {host: '', port: 0}});
+    backend.start('invalid', '', '', '', {datadir: '', host: '', port: 0});
   });
 });

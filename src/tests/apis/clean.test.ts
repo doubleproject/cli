@@ -52,7 +52,8 @@ test('cleaning invalid chain should fail', t => {
       local: true,
       chain: 'invalid',
       datadir: 'datadir',
-      host: { host: '', port: 0 },
+      host: '',
+      port: 0,
     });
   });
 });

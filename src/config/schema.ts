@@ -1,14 +1,3 @@
-export interface INodeConfig {
-  /** Host IP address */
-  host: string;
-
-  /** Protocol port */
-  port: number;
-
-  /** JSON-RPC server port */
-  rpcPort?: number;
-}
-
 export interface IEnvConfig {
   /** Name of the chain. Default is ethereum. */
   chain?: string;
@@ -31,7 +20,13 @@ export interface IEnvConfig {
    * A node configuration. Either a string in the form of IP:port, or an
    * `INodeConfig`.
    */
-  host: INodeConfig;
+  host: string;
+
+  /** Protocol port */
+  port: number;
+
+  /** JSON-RPC server port */
+  rpcPort?: number;
 
   /** Backend to use for local nodes. Default is geth. */
   backend?: string;

@@ -44,10 +44,8 @@ test('should not be able to start invalid chain', t => {
     start.startSingle('invalid-proj', 'invalid', {
       chain: 'invalid',
       datadir: '',
-      host: {
-        host: '',
-        port: 0,
-      },
+      host: '',
+      port: 0,
     });
   });
 });

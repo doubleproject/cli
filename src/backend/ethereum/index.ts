@@ -120,9 +120,9 @@ export function clean(datadir: string, backend: string) {
  */
 export function start(datadir: string, proj: string, env: string, config: IEnvConfig) {
   if (config.backend === 'geth') {
-    const ip = config.host.host;
-    const port = config.host.port;
-    const rpcPort = config.host.rpcPort ? config.host.rpcPort! : 8545;
+    const ip = config.host;
+    const port = config.port;
+    const rpcPort = config.rpcPort ? config.rpcPort! : 8545;
 
     const script = Geth.startScript({
       datadir,

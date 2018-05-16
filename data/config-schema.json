@@ -44,8 +44,16 @@
           "type": "number"
         },
         "host": {
-          "description": "Host IP:port addresses, in that format",
-          "$ref": "#/definitions/INodeConfig"
+          "description": "Host IP address",
+          "type": "string"
+        },
+        "port": {
+          "description": "Protocol port",
+          "type": "number"
+        },
+        "rpcPort": {
+          "description": "JSON-RPC server port",
+          "type": "number"
         },
         "local": {
           "description": "Whether the environment is for a local node",
@@ -67,7 +75,8 @@
       "type": "object",
       "required": [
         "datadir",
-        "host"
+        "host",
+        "port"
       ]
     }
   },
