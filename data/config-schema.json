@@ -43,18 +43,17 @@
           "description": "Gas price multiplier in Wei",
           "type": "number"
         },
-        "hosts": {
-          "description": "Host IP:port addresses, in that format",
-          "items": {
-            "oneOf": [
-              { "type": "string" },
-              {
-                "$ref": "#/definitions/INodeConfig"
-              }
-            ]
-          },
-          "minItems": 1,
-          "type": "array"
+        "host": {
+          "description": "Host IP address",
+          "type": "string"
+        },
+        "port": {
+          "description": "Protocol port",
+          "type": "number"
+        },
+        "rpcPort": {
+          "description": "JSON-RPC server port",
+          "type": "number"
         },
         "local": {
           "description": "Whether the environment is for a local node",
@@ -76,7 +75,8 @@
       "type": "object",
       "required": [
         "datadir",
-        "hosts"
+        "host",
+        "port"
       ]
     }
   },

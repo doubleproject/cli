@@ -51,7 +51,8 @@ test('default config should be valid', t => {
   t.is(cfg.chain, 'ethereum');
   t.is(cfg.envs.local!.backend, 'geth');
   t.is(cfg.envs.local!.datadir, '~/.double/ethereum');
-  t.deepEqual(cfg.envs.local!.hosts, ['127.0.0.1:30303']);
+  t.is(cfg.envs.local!.host, '127.0.0.1');
+  t.is(cfg.envs.local!.port, 30303);
   t.is(cfg.envs.local!.networkID, 999);
 });
 
@@ -62,9 +63,9 @@ test('default test config should be valid', t => {
   t.is(cfg.chain, 'ethereum');
   t.is(cfg.envs.local!.backend, 'geth');
   t.is(cfg.envs.local!.datadir, '~/.double/ethereum');
-  t.deepEqual(cfg.envs.local!.hosts, [
-    '127.0.0.1:30303', {host: '127.0.0.1', port: 30304, rpcPort: 8546},
-  ]);
+  t.is(cfg.envs.local!.host, '127.0.0.1');
+  t.is(cfg.envs.local!.port, 30304);
+  t.is(cfg.envs.local!.rpcPort!, 8546);
   t.is(cfg.envs.local!.networkID, 999);
 });
 

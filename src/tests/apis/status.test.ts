@@ -19,32 +19,29 @@ test.before('Setting up status test directory', () => {
 
 test.serial('checking status from for non-existent environments should fail', async t => {
   await t.throws(async () => {
-    await status.cli('non-existent-env', true);
+    await status.getStatus('non-existent-env');
   });
 });
 
 test.serial('checking status without monitor should fail', async t => {
   await t.throws(async () => {
-    await status.cli('local', true);
+    await status.getStatus('local');
   });
 });
 
 test.serial('status should return expected results', async t => {
   const monitor = new Monitor([
-    {address: 'localhost:9485', project: 'test-proj', environment: 'local'},
-    {address: 'localhost:9486', project: 'test-proj', environment: 'local'},
+    {address: 'localhost:9485', project: 'status-test-project', environment: 'local'},
   ], 'monitor.jl');
 
   const geth1 = new MockGeth('999');
-  const geth2 = new MockGeth('999');
 
   const availableMonitorPort = await getFirstAvailablePortForMonitor();
 
-  await monitor.start(availableMonitorPort);
   await geth1.start(9485);
-  await geth2.start(9486);
+  await monitor.start(availableMonitorPort);
 
-  const networkStatus = await status.cli('local', true);
+  const networkStatus = await status.getStatus('local');
 
   t.is(networkStatus.environment, 'local');
   t.is(networkStatus.config.project, 'status-test-project');

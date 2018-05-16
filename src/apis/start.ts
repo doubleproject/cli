@@ -49,7 +49,7 @@ export function startForConfig(cfg: IProjectConfig, env?: string) {
     env = envs[0];
   }
 
-  startSingle(env, envcfg);
+  startSingle(cfg.project, env, envcfg);
 }
 
 export function startMulti(cfg: IProjectConfig, envs: string[]) {
@@ -60,17 +60,18 @@ export function startMulti(cfg: IProjectConfig, envs: string[]) {
     choices: envs,
   }];
   inquirer.prompt(questions).then((answers: any) => {
-    startSingle(answers.env, cfg.envs[answers.env]);
+    startSingle(cfg.project, answers.env, cfg.envs[answers.env]);
   });
 }
 
 /**
  * Starts a single environment.
  *
+ * @param {string} proj - The name of the project.
  * @param {string} env - The name of the environment.
  * @param {IEnvConfig} cfg - The config of the environment.
  */
-export function startSingle(env: string, cfg: IEnvConfig) {
+export function startSingle(proj: string, env: string, cfg: IEnvConfig) {
   info(`Starting ${env} environment`);
-  backend.start(cfg.chain!, cfg.datadir, cfg);
+  backend.start(cfg.chain!, cfg.datadir, proj, env, cfg);
 }

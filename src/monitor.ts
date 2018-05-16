@@ -15,6 +15,7 @@ import * as getPort from 'get-port';
 import * as _ from 'lodash';
 import * as readline from 'readline';
 import * as rp from 'request-promise';
+import * as RWLock from 'rwlock';
 import * as winston from 'winston';
 
 export interface IMonitoredNodeConfig {
@@ -32,6 +33,11 @@ export interface IMonitoredNodeConfig {
    * The environment this node belongs to.
    */
   environment: string;
+
+  /**
+   * The process id of a local node.
+   */
+  processId?: number;
 
   /**
    * A command that can be used to start/restart the node.  If `undefined`, the
@@ -61,6 +67,11 @@ function validateMonitoredNodeConfig(data: any): IMonitoredNodeConfig {
     throw new Error('environment is not a string');
   }
 
+  if (data.processId &&
+      typeof(data.processId) !== 'number') {
+    throw new Error('invalid processId field');
+  }
+
   if (data.reviveCmd &&
       typeof(data.reviveCmd) !== 'string') {
     throw new Error('invalid reviveCmd field');
@@ -85,6 +96,7 @@ export interface IMonitoredNodeStatus {
   lastResponseId: number;
   failureCount: number;
   networkId?: string;
+  processId?: number;
   reviveCmd?: string;
   reviveArgs?: string[];
   project: string;
@@ -156,7 +168,7 @@ export async function scanForMonitor(): Promise<number> {
  * there is no monitor running.
  *
  * @param {IMonitoredNodeConfig[]} cfgs - The configuration used to watch this node with
- * @param {number} port - Optional port at which the port is running, if this is
+ * @param {number} port - Optional port at which the monitor is running, if this is
  * specified, this method will not scan for monitor automatically
  */
 export async function addToMonitor(cfgs: IMonitoredNodeConfig[],
@@ -170,6 +182,18 @@ export async function addToMonitor(cfgs: IMonitoredNodeConfig[],
       nodes: cfgs,
     },
   });
+}
+
+/**
+ * Scans for an alive monitor every 500ms, and resolves until one is found.
+ */
+export async function waitForAliveMonitor(): Promise<void> {
+  try {
+    await scanForMonitor();
+  } catch (err) {
+    await new Promise(resolve => setTimeout(() => resolve(), 500));
+    await waitForAliveMonitor();
+  }
 }
 
 /**
@@ -204,6 +228,9 @@ export class Monitor {
   /** The timer used to ping nodes */
   private timer?: NodeJS.Timer;
 
+  /** The lock used to protect configuration file */
+  private lock: RWLock;
+
   /**
    * Construct a monitor for the given nodes, open an HTTP server on the given
    * port for incoming requests.
@@ -224,6 +251,8 @@ export class Monitor {
     this.timer = undefined;
 
     this.nodeStatuses = [];
+
+    this.lock = new RWLock();
 
     // Why do we pass both config data and config path in? Because the
     // constructor cannot be asynchronous... And since parsing the configuration
@@ -331,16 +360,19 @@ export class Monitor {
    * Append the configurations to the configuration jsonline file.
    */
   private appendConfigData(nodes: IMonitoredNodeConfig[]) {
-    const file = fs.createWriteStream(this.configPath, {
-      flags: 'a',
-    });
+    this.lock.writeLock(release => {
+      const file = fs.createWriteStream(this.configPath, {
+        flags: 'a',
+      });
 
-    nodes.forEach(node => {
-      const configLine = JSON.stringify(node);
-      file.write(configLine + '\n');
-    });
+      nodes.forEach(node => {
+        const configLine = JSON.stringify(node);
+        file.write(configLine + '\n');
+      });
 
-    file.end();
+      file.end();
+      release();
+    });
   }
 
   private setupRouting() {
@@ -422,6 +454,40 @@ export class Monitor {
     });
 
     child.unref();
+
+    node.processId = child.pid;
+    this.modifyMonitoredNodeProcessId(node);
+  }
+
+  /**
+   * Search the config file using this node's address string, and replaces its
+   * processId field with the new processId value from the status.
+   */
+  private modifyMonitoredNodeProcessId(node: IMonitoredNodeStatus) {
+    this.lock.writeLock(release => {
+      const configData  = fs.readFileSync(this.configPath, 'utf8');
+      const configLines = configData.split('\n');
+
+      let lineIdx = 0;
+      for (const line of configLines) {
+        try {
+          const config = JSON.parse(line) as IMonitoredNodeConfig;
+          if (config.address === node.address) {
+            config.processId = node.processId;
+            configLines[lineIdx] = JSON.stringify(config);
+            break;
+          }
+        } catch (err) {
+          // Just skip over the bad lines.
+        }
+
+        lineIdx++;
+      }
+
+      fs.writeFileSync(this.configPath, configLines.join('\n'));
+
+      release();
+    });
   }
 
   private async ping() {

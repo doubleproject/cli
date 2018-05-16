@@ -13,7 +13,7 @@ import * as clean from './apis/clean';
 import * as init from './apis/init';
 import * as start from './apis/start';
 import * as status from './apis/status';
-import { getFirstAvailablePortForMonitor, scanForMonitor } from './monitor';
+import * as Monitor from './monitor';
 
 program.version(version);
 
@@ -43,13 +43,11 @@ program
   .command('start [env]')
   .description('Start a local environment')
   .action(async () => {
-    start.cli();
-
     try {
       // Check if monitor is already running.
-      await scanForMonitor();
+      await Monitor.scanForMonitor();
     } catch (err) {
-      const port = await getFirstAvailablePortForMonitor();
+      const port = await Monitor.getFirstAvailablePortForMonitor();
       const monitorConfigFile = path.join(os.homedir(), '.double', 'monitor.jl');
       const monitorLog = path.join(os.homedir(), '.double', 'monitor.log');
       const monitorStdoutStderrLog = path.join(os.homedir(), '.double', 'monitor-stdout-stderr.log');
@@ -60,6 +58,10 @@ program
         options: ['dist/monitor.js', `${port}`, monitorConfigFile, monitorLog],
       }, monitorStdoutStderrLog);
     }
+
+    await Monitor.waitForAliveMonitor();
+
+    start.cli();
   });
 
 program
