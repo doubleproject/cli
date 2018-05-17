@@ -148,3 +148,10 @@ export function start(datadir: string, proj: string, env: string, config: IEnvCo
     throw new Error(`Unsupported Ethereum backend ${config.backend}`);
   }
 }
+
+/**
+ * Compiles a smart contract.
+ */
+export function compile() {
+
+}
