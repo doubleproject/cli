@@ -3,11 +3,14 @@ import * as winston from 'winston';
 
 import { test } from 'ava';
 import * as rp from 'request-promise';
+import * as sqlite from 'sqlite';
+import * as sqlite3 from 'sqlite3';
 import { addToMonitor,
          getFirstAvailablePortForMonitor,
          IMonitoredNodeStatus,
          Monitor,
-         scanForMonitor } from '../monitor';
+         scanForMonitor,
+       } from '../monitor';
 import { MockGeth } from './utils/geth';
 
 let port = 8080;
@@ -55,10 +58,8 @@ test.beforeEach('Starting servers...', async t => {
     },
   ];
 
-  fs.ensureFileSync('testconfig.jl');
-
   const monitor = new Monitor(
-    config, 'testconfig.jl', K_HEARTBEAT_INTERVAL, K_FAILURE_TOLERANCE,
+    'teststore.sqlite', K_HEARTBEAT_INTERVAL, K_FAILURE_TOLERANCE,
   );
 
   t.context = {
@@ -74,6 +75,8 @@ test.beforeEach('Starting servers...', async t => {
     context.server1.start(port1),
     context.server2.start(port2),
     context.monitor.start(port3)]);
+
+  await addToMonitor(config, port3);
 
   context.server1Port = port1;
   context.server2Port = port2;
@@ -91,7 +94,7 @@ test.afterEach.always('Shutting down servers...', async t => {
   fs.removeSync('server1');
   fs.removeSync('server2');
 
-  fs.removeSync('testconfig.jl');
+  fs.removeSync('teststore.sqlite');
 });
 
 test.serial('monitor should report alive for both servers', async t => {
@@ -179,9 +182,6 @@ test.serial('monitor /add request should add a monitored instance', async t => {
   const triedToReviveAddedServer = fs.existsSync('addedServer');
   t.is(triedToReviveAddedServer, true);
 
-  const configData = await fs.readFile('testconfig.jl');
-  t.is(configData.includes('localhost:9000'), true);
-
   fs.removeSync('addedServer');
 });
 
@@ -221,22 +221,24 @@ test.serial('monitor stop should be idempotent', async t => {
 
 test.serial('monitor should reject invalid constructor parameters', async t => {
   t.throws(() => {
-    const monitor = new Monitor([], 'testconfig.jl', -100, -2);
+    const monitor = new Monitor('teststorage.sqlite', -100, -2);
     monitor.stop();
   });
 
   t.throws(() => {
-    const monitor = new Monitor([], 'testconfig.jl', 5000, -2);
+    const monitor = new Monitor('teststorage.sqlite', 5000, -2);
     monitor.stop();
   });
 });
 
 test.serial('scan should return proper port number for running monitor process', async t => {
-  const monitor = new Monitor([], 'monitor.jl');
+  const monitor = new Monitor('teststorage2.sqlite');
   await monitor.start(9600);
   const foundPort = await scanForMonitor();
   t.is(foundPort, 9600);
   await monitor.stop();
+
+  fs.removeSync('teststorage2.sqlite');
 });
 
 test.serial('scan should throw if no monitor is running', async t => {
@@ -328,25 +330,19 @@ test.serial('monitor should update configuration with new process id after reviv
   };
 
   await addToMonitor([newNode], context.monitorPort);
-
   await new Promise<void>(resolve => {
     setTimeout(() =>
       resolve(), K_HEARTBEAT_INTERVAL * (K_FAILURE_TOLERANCE + 1),
     );
   });
 
-  let foundPid;
-  for (const line of fs.readFileSync('testconfig.jl', 'utf-8').split('\n')) {
-    try {
-      const cfg = JSON.parse(line);
-      if (cfg.address === newNode.address) {
-        foundPid = cfg.processId;
-      }
-    } catch (err) {
-      // Skip
-    }
-  }
+  const db   = await sqlite.open('teststore.sqlite', { mode: sqlite3.OPEN_READONLY });
+  const proc = await db.get(`
+SELECT * FROM MonitoredNode WHERE project = $project AND environment = $environment
+`, {
+  $project: newNode.project,
+  $environment: newNode.environment,
+});
 
-  t.is(typeof(foundPid), 'number');
-  t.truthy(foundPid);
+  t.truthy(proc.processId);
 });

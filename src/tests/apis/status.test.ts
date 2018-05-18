@@ -3,8 +3,10 @@ import { BigNumber } from 'bignumber.js';
 import * as fs from 'fs-extra';
 
 import * as status from '../../apis/status';
-import { getFirstAvailablePortForMonitor,
+import { addToMonitor,
+         getFirstAvailablePortForMonitor,
          Monitor,
+         waitForAliveMonitor,
        } from '../../monitor';
 import { EXPECTED_BALANCES,
          EXPECTED_BLOCK_NUMBER,
@@ -30,16 +32,20 @@ test.serial('checking status without monitor should fail', async t => {
 });
 
 test.serial('status should return expected results', async t => {
-  const monitor = new Monitor([
-    {address: 'localhost:9485', project: 'status-test-project', environment: 'local'},
-  ], 'monitor.jl');
 
+  const node = {address: 'localhost:9485', project: 'status-test-project', environment: 'local'};
+
+  const monitor = new Monitor('monitor.sqlite');
   const geth1 = new MockGeth('999');
 
   const availableMonitorPort = await getFirstAvailablePortForMonitor();
 
   await geth1.start(9485);
   await monitor.start(availableMonitorPort);
+  await waitForAliveMonitor();
+  await addToMonitor([node]);
+
+  await (monitor as any).ping();
 
   const networkStatus = await status.getStatus('local');
 
