@@ -346,5 +346,7 @@ SELECT * FROM MonitoredNode WHERE project = $project AND environment = $environm
   $environment: newNode.environment,
 });
 
+  await db.close();
+
   t.truthy(proc.processId);
 });
