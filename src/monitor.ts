@@ -488,11 +488,17 @@ SET processID = $processId
 WHERE project = $project AND environment = $environment;
 `;
 
-    this.database!.run(query, {
-      $processId: node.processId,
-      $project: node.project,
-      $environment: node.environment,
-    });
+    // Since this modify method is executed in the callback of a timer for
+    // ping(), it's possible that the monitor has already been stopped, and the
+    // database would become undefined at this point, so we need to guard this
+    // with a if statement.
+    if (this.database) {
+      this.database.run(query, {
+        $processId: node.processId,
+        $project: node.project,
+        $environment: node.environment,
+      });
+    }
   }
 
   private async ping() {

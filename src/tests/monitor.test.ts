@@ -336,6 +336,8 @@ test.serial('monitor should update configuration with new process id after reviv
     );
   });
 
+  await context.monitor.stop();
+
   const db   = await sqlite.open('teststore.sqlite', { mode: sqlite3.OPEN_READONLY });
   const proc = await db.get(`
 SELECT * FROM MonitoredNode WHERE project = $project AND environment = $environment
