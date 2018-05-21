@@ -332,7 +332,7 @@ test.serial('monitor should update configuration with new process id after reviv
   await addToMonitor([newNode], context.monitorPort);
   await new Promise<void>(resolve => {
     setTimeout(() =>
-      resolve(), K_HEARTBEAT_INTERVAL * (K_FAILURE_TOLERANCE + 1),
+      resolve(), K_HEARTBEAT_INTERVAL * (K_FAILURE_TOLERANCE + 2),
     );
   });
 
