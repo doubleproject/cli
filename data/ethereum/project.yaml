@@ -4,8 +4,7 @@ backend: geth
 envs:
   local:
     networkID: 999
-    backend: geth
-    datadir: double_data
+    datadir: double/local
     local: true
     host: 127.0.0.1
     port: 30303

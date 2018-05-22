@@ -37,7 +37,7 @@ export function createGenesis(datadir: string) {
   }
 
   fs.ensureDirSync(datadir);
-  fs.writeJsonSync(file, genesis);
+  fs.writeJsonSync(file, genesis, {spaces: 2});
 }
 
 /**
@@ -72,7 +72,7 @@ export function createAccounts(datadir: string, pw?: string, count?: number) {
     accounts[`a${existing + i + 1}`] = key.address;
   }
 
-  fs.writeJsonSync(manifest, accounts);
+  fs.writeJsonSync(manifest, accounts, {spaces: 2});
 }
 
 /**
@@ -118,7 +118,9 @@ export function clean(datadir: string, backend: string) {
  * @param {string} env - The name of the environment.
  * @param {IEnvConfig} config - The environment configuration.
  */
-export function start(datadir: string, proj: string, env: string, config: IEnvConfig) {
+export function start(
+  datadir: string, proj: string, env: string, config: IEnvConfig,
+) {
   if (config.backend === 'geth') {
     const ip = config.host;
     const port = config.port;
@@ -147,11 +149,4 @@ export function start(datadir: string, proj: string, env: string, config: IEnvCo
   } else {
     throw new Error(`Unsupported Ethereum backend ${config.backend}`);
   }
-}
-
-/**
- * Compiles a smart contract.
- */
-export function compile() {
-
 }
