@@ -47,14 +47,14 @@ test.beforeEach('Starting servers...', async t => {
       reviveCmd: 'touch',
       reviveArgs: 'server1',
       project: 'monitor-test',
-      environment: 'local',
+      environment: 'local1',
     },
     {
       address: `localhost:${port2}`,
       reviveCmd: 'touch',
       reviveArgs: 'server2',
       project: 'monitor-test',
-      environment: 'local',
+      environment: 'local2',
     },
   ];
 
@@ -347,4 +347,26 @@ SELECT * FROM MonitoredNode WHERE project = $project AND environment = $environm
   await db.close();
 
   t.truthy(proc.processId);
+});
+
+test.serial('monitor /remove should remove the proper configuration', async t => {
+  const context = t.context as ITestContext;
+  const proj = context.config[0].project;
+  const env = context.config[0].environment;
+
+  await rp.post({
+    url: `http://localhost:${context.monitorPort}/remove/${proj}/${env}`,
+  });
+
+  await context.monitor.stop();
+
+  const db = await sqlite.open('teststore.sqlite', { mode: sqlite3.OPEN_READONLY });
+  const cfg = await db.get(`
+SELECT * FROM MonitoredNode WHERE project = $project AND environment = $environment
+`, {
+  $project: proj,
+  $environment: env,
+});
+
+  t.falsy(cfg);
 });

@@ -383,13 +383,32 @@ VALUES
 `;
 
     for (const node of nodes) {
-      this.database!.run(query, {
-        $project: node.project,
-        $environment: node.environment,
-        $address: node.address,
-        $processId: node.processId,
-        $reviveCmd: node.reviveCmd,
-        $reviveArgs: node.reviveArgs,
+      if (this.database) {
+        this.database.run(query, {
+          $project: node.project,
+          $environment: node.environment,
+          $address: node.address,
+          $processId: node.processId,
+          $reviveCmd: node.reviveCmd,
+          $reviveArgs: node.reviveArgs,
+        });
+      }
+    }
+  }
+
+  /**
+   * Remove this node's monitor configuration.
+   */
+  private removeNodeConfig(project: string, environment: string) {
+    const query = `
+DELETE FROM MonitoredNode
+WHERE project = $project AND environment = $environment;
+`;
+
+    if (this.database) {
+      this.database.run(query, {
+        $project: project,
+        $environment: environment,
       });
     }
   }
@@ -447,6 +466,23 @@ VALUES
         res.status(400).send(
           `${req.body} contains invalid configuration, error: ${err}`);
       }
+    });
+
+    this.app.post('/remove/:project/:environment', (req, res) => {
+      const proj = req.params.project;
+      const env  = req.params.environment;
+
+      const nodeIdx =
+        this.nodeStatuses.findIndex(node => node.project === proj && node.environment === env);
+
+      if (nodeIdx > 0) {
+        // This removes this node from the array of node statuses being kept
+        // track of.
+        this.nodeStatuses.splice(nodeIdx, 1);
+      }
+
+      this.removeNodeConfig(proj, env);
+      res.status(200).send('Ok');
     });
   }
 
