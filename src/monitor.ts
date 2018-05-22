@@ -6,16 +6,14 @@
  */
 
 import * as ChildProcess from 'child_process';
-import * as fs from 'fs-extra';
 import * as http from 'http';
 
 import * as bodyParser from 'body-parser';
 import * as express from 'express';
 import * as getPort from 'get-port';
 import * as _ from 'lodash';
-import * as readline from 'readline';
 import * as rp from 'request-promise';
-import * as RWLock from 'rwlock';
+import * as sqlite from 'sqlite';
 import * as winston from 'winston';
 
 export interface IMonitoredNodeConfig {
@@ -213,8 +211,11 @@ export class Monitor {
    */
   private failureTolerance: number;
 
-  /** Path to the configuration file. */
-  private configPath: string;
+  /** Path to the database storage file. */
+  private storagePath: string;
+
+  /** Handle to the database */
+  private database?: sqlite.Database;
 
   /** The express app */
   private app: express.Application;
@@ -228,40 +229,23 @@ export class Monitor {
   /** The timer used to ping nodes */
   private timer?: NodeJS.Timer;
 
-  /** The lock used to protect configuration file */
-  private lock: RWLock;
-
   /**
    * Construct a monitor for the given nodes, open an HTTP server on the given
    * port for incoming requests.
    *
-   * @param nodes The configurations for each monitored node
-   * @param configPath The path to the configuration file
+   * @param storagePath The path to the nedb storage file
    * @param heartbeatInterval Number of milliseconds between each ping request
    * @param failureTolerance Number of failures monitor should tolerate before
    *    considering a node dead, and trying to revive it.
    */
-  constructor(nodes: IMonitoredNodeConfig[],
-              configPath: string,
+  constructor(storagePath: string,
               heartbeatInterval?: number,
               failureTolerance?: number) {
     this.app = express();
     this.setupRouting();
-    this.server = undefined;
-    this.timer = undefined;
+    this.storagePath = storagePath;
 
     this.nodeStatuses = [];
-
-    this.lock = new RWLock();
-
-    // Why do we pass both config data and config path in? Because the
-    // constructor cannot be asynchronous... And since parsing the configuration
-    // can potentially block, we don't want to parse that data synchronously
-    // either. This is a compromise.
-    this.configPath = configPath;
-    for (const node of nodes) {
-      this.nodeStatuses.push(this.configToInitialNodeStatus(node));
-    }
 
     if (typeof heartbeatInterval !== 'undefined') {
       if (heartbeatInterval < 1000) {
@@ -289,6 +273,10 @@ export class Monitor {
     this.timer = this.createPingTimer();
     this.ping();
 
+    this.database = await sqlite.open(this.storagePath);
+
+    await this.createMonitoredNodeTableIfNecessary();
+
     return new Promise<void>(resolve => {
       this.server = http.createServer(this.app);
       this.server.listen(port, () => resolve());
@@ -304,7 +292,9 @@ export class Monitor {
       this.timer = undefined;
     }
 
-    return new Promise<void>(resolve => {
+    // Note that we must shutdown/release resources in the opposite order of
+    // creation in start().
+    await new Promise<void>(resolve => {
       if (typeof this.server !== 'undefined') {
         this.server.close(() => resolve());
         this.server = undefined;
@@ -312,6 +302,31 @@ export class Monitor {
         resolve();
       }
     });
+
+    if (this.database) {
+      await this.database.close();
+      this.database = undefined;
+    }
+  }
+
+  /**
+   * Create a table for storing monitored nodes if it doesn't exist yet.
+   */
+  private async createMonitoredNodeTableIfNecessary(): Promise<void> {
+    // Table schema for configurations of monitored node.
+    const query = `
+CREATE TABLE IF NOT EXISTS MonitoredNode (
+  project        TEXT NOT NULL,
+  environment    TEXT NOT NULL,
+  address        TEXT NOT NULL,
+  processId      INT,
+  reviveCmd      TEXT,
+  reviveArgs     TEXT,
+  PRIMARY KEY (project, environment)
+);
+`;
+
+    await this.database!.run(query);
   }
 
   private validateNetVersionResponse(data: any): INetVersionResponse {
@@ -357,22 +372,45 @@ export class Monitor {
   }
 
   /**
-   * Append the configurations to the configuration jsonline file.
+   * Update the configurations stored in the the database.
    */
-  private appendConfigData(nodes: IMonitoredNodeConfig[]) {
-    this.lock.writeLock(release => {
-      const file = fs.createWriteStream(this.configPath, {
-        flags: 'a',
-      });
+  private updateConfigData(nodes: IMonitoredNodeConfig[]) {
+    const query = `
+INSERT OR REPLACE INTO MonitoredNode
+(project, environment, address, processId, reviveCmd, reviveArgs)
+VALUES
+($project, $environment, $address, $processId, $reviveCmd, $reviveArgs);
+`;
 
-      nodes.forEach(node => {
-        const configLine = JSON.stringify(node);
-        file.write(configLine + '\n');
-      });
+    for (const node of nodes) {
+      if (this.database) {
+        this.database.run(query, {
+          $project: node.project,
+          $environment: node.environment,
+          $address: node.address,
+          $processId: node.processId,
+          $reviveCmd: node.reviveCmd,
+          $reviveArgs: node.reviveArgs,
+        });
+      }
+    }
+  }
 
-      file.end();
-      release();
-    });
+  /**
+   * Remove this node's monitor configuration.
+   */
+  private removeNodeConfig(project: string, environment: string) {
+    const query = `
+DELETE FROM MonitoredNode
+WHERE project = $project AND environment = $environment;
+`;
+
+    if (this.database) {
+      this.database.run(query, {
+        $project: project,
+        $environment: environment,
+      });
+    }
   }
 
   private setupRouting() {
@@ -421,13 +459,30 @@ export class Monitor {
           this.nodeStatuses.push(
             this.configToInitialNodeStatus(monitoredNodeConfig));
           validConfigs.push(monitoredNodeConfig);
-          this.appendConfigData(validConfigs);
+          this.updateConfigData(validConfigs);
           res.status(200).send('Ok');
         }
       } catch (err) {
         res.status(400).send(
           `${req.body} contains invalid configuration, error: ${err}`);
       }
+    });
+
+    this.app.post('/remove/:project/:environment', (req, res) => {
+      const proj = req.params.project;
+      const env  = req.params.environment;
+
+      const nodeIdx =
+        this.nodeStatuses.findIndex(node => node.project === proj && node.environment === env);
+
+      if (nodeIdx > 0) {
+        // This removes this node from the array of node statuses being kept
+        // track of.
+        this.nodeStatuses.splice(nodeIdx, 1);
+      }
+
+      this.removeNodeConfig(proj, env);
+      res.status(200).send('Ok');
     });
   }
 
@@ -460,34 +515,26 @@ export class Monitor {
   }
 
   /**
-   * Search the config file using this node's address string, and replaces its
-   * processId field with the new processId value from the status.
+   * Update the monitored node's process id.
    */
   private modifyMonitoredNodeProcessId(node: IMonitoredNodeStatus) {
-    this.lock.writeLock(release => {
-      const configData  = fs.readFileSync(this.configPath, 'utf8');
-      const configLines = configData.split('\n');
+    const query = `
+UPDATE MonitoredNode
+SET processID = $processId
+WHERE project = $project AND environment = $environment;
+`;
 
-      let lineIdx = 0;
-      for (const line of configLines) {
-        try {
-          const config = JSON.parse(line) as IMonitoredNodeConfig;
-          if (config.address === node.address) {
-            config.processId = node.processId;
-            configLines[lineIdx] = JSON.stringify(config);
-            break;
-          }
-        } catch (err) {
-          // Just skip over the bad lines.
-        }
-
-        lineIdx++;
-      }
-
-      fs.writeFileSync(this.configPath, configLines.join('\n'));
-
-      release();
-    });
+    // Since this modify method is executed in the callback of a timer for
+    // ping(), it's possible that the monitor has already been stopped, and the
+    // database would become undefined at this point, so we need to guard this
+    // with a if statement.
+    if (this.database) {
+      this.database.run(query, {
+        $processId: node.processId,
+        $project: node.project,
+        $environment: node.environment,
+      });
+    }
   }
 
   private async ping() {
@@ -538,48 +585,13 @@ export class Monitor {
 
 }
 
-/**
- * Read the configuration file asynchronously and return the result.
- */
-async function parseConfigs(path: string): Promise<IMonitoredNodeConfig[]> {
-  const result = new Promise<IMonitoredNodeConfig[]>((resolve, reject) => {
-    const configs: IMonitoredNodeConfig[] = [];
-
-    const readStream = fs.createReadStream(path);
-    readStream.on('error', err => {
-      reject(`Failed to read configuration: ${err}`);
-    });
-
-    const lineReader = readline.createInterface({
-      input: readStream,
-    });
-
-    lineReader.on('line', line => {
-      winston.verbose(line);
-      try {
-        const data = JSON.parse(line);
-        const config = validateMonitoredNodeConfig(data);
-        configs.push(config);
-      } catch (err) {
-        reject(`Failed to parse configuration data: ${err}`);
-      }
-    });
-
-    lineReader.on('close', () => {
-      resolve(configs);
-    });
-  });
-
-  return result;
-}
-
 if (require.main === module) {
   if (process.argv.length < 4) {
-    throw new Error('monitor <port> <configPath> <logPath>');
+    throw new Error('monitor <port> <storagePath> <logPath>');
   }
 
   const port = process.argv[2];
-  const configPath = process.argv[3];
+  const storagePath = process.argv[3];
   const logPath = process.argv[4];
 
   winston.add(winston.transports.File, {
@@ -587,7 +599,7 @@ if (require.main === module) {
   });
   winston.remove(winston.transports.Console);
 
-  winston.info(`Using configuration at: ${configPath}`);
+  winston.info(`Using storage at: ${storagePath}`);
 
   const portNum = parseInt(port, 10);
 
@@ -595,14 +607,6 @@ if (require.main === module) {
     winston.error('Please pass a number for the port argument');
   }
 
-  parseConfigs(configPath)
-    .then(configs => {
-      winston.info(JSON.stringify(configs));
-      const monitor = new Monitor(configs, configPath);
-      monitor.start(portNum);
-    })
-    .catch(err => {
-      winston.error(err);
-      process.exit(1);
-    });
+  const monitor = new Monitor(storagePath);
+  monitor.start(portNum);
 }
