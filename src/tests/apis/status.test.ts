@@ -60,6 +60,8 @@ test.serial('status should return expected results', async t => {
     t.is(acctBalance.balance.toString(),
          new BigNumber(EXPECTED_BALANCES[acctBalance.account]).toString());
   }
+
+  await monitor.stop();
 });
 
 test.after('Removing status test directory', () => {
