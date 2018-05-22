@@ -100,9 +100,7 @@ test.afterEach.always('Shutting down servers...', async t => {
 test.serial('monitor should report alive for both servers', async t => {
   const context = t.context as ITestContext;
 
-  await new Promise<void>(resolve => {
-    setTimeout(() => resolve(), K_HEARTBEAT_INTERVAL * 1.5);
-  });
+  await (context.monitor as any).ping();
 
   const body = await rp.get({
     url: `http://localhost:${context.monitorPort}/status`,
