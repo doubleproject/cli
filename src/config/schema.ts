@@ -49,7 +49,7 @@ interface IEnvs {
    * A project can have multiple local or remote environments. However, they
    * must have different names and have different datadirs.
    */
-  [Key: string]: IEnvConfig;
+  [key: string]: IEnvConfig;
 }
 
 export interface IProjectConfig {
